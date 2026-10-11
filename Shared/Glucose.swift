@@ -39,12 +39,33 @@ struct Now: Codable {
         let carbs: Dose?
     }
 
+    struct Points: Codable {
+        let step: Double
+        /// Пары [unix-секунды, mg/dL], усреднённые по шагу; пропуск сенсора —
+        /// просто нет точек.
+        let points: [[Double]]
+    }
+
+    struct Series: Codable {
+        let day: Points
+    }
+
+    /// Журнал бота: еда в граммах, болюс и базальный в единицах.
+    struct Events: Codable {
+        let meals: [[Double]]
+        let bolus: [[Double]]
+    }
+
     let generatedAt: Double
     let collector: Collector
     let target: Target
     let latest: Latest?
     let forecast: Forecast?
     let active: Active
+    // Опциональны: старая выжимка их не несёт, и часы не должны из-за этого
+    // остаться без цифры.
+    let series: Series?
+    let events: Events?
 }
 
 enum Feed {

@@ -164,7 +164,9 @@ private let sample = Now(
     active: .init(
         insulin: .init(left: 0.3, of: 6, until: Date.now.timeIntervalSince1970 + 3600),
         carbs: .init(left: 11, of: 68, until: Date.now.timeIntervalSince1970 + 3600)
-    )
+    ),
+    series: nil,
+    events: nil
 )
 
 #Preview(as: .accessoryRectangular) {

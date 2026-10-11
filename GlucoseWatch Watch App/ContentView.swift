@@ -67,6 +67,8 @@ private struct Reading: View {
                 .font(.footnote)
                 .foregroundStyle(stale || failed ? .orange : .secondary)
 
+            GlucoseChart(now: now, date: date)
+
             if !stale {
                 if let fall = now.fallRisk {
                     Label("Может упасть до \(Glucose.mmol(fall)) за полчаса", systemImage: "arrow.down")
