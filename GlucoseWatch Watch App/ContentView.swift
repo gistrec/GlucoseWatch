@@ -85,8 +85,8 @@ private struct Reading: View {
                 }
             }
 
-            let insulin = Now.live(now.active.insulin, at: date)
-            let carbs = Now.live(now.active.carbs, at: date)
+            let insulin = now.live(now.active.insulin, at: date)
+            let carbs = now.live(now.active.carbs, at: date)
             if insulin != nil || carbs != nil {
                 Divider()
                 if let insulin {

@@ -12,5 +12,8 @@ import SwiftUI
 struct GlucoseComplicationBundle: WidgetBundle {
     var body: some Widget {
         GlucoseComplication()
+        ChartComplication()
+        InsulinComplication()
+        CarbsComplication()
     }
 }

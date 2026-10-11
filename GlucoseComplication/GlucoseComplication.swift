@@ -18,23 +18,26 @@ struct Provider: TimelineProvider {
     }
 
     /// Обновления раздаёт система — несколько десятков в сутки, а не каждые
-    /// пять минут. Просим следующее к ожидаемому замеру, а вторая запись
-    /// гасит значение, если до тех пор обновления так и не будет: старая
-    /// цифра на циферблате опаснее, чем серая.
+    /// пять минут. Просим следующее к ожидаемому замеру, а до него записи
+    /// идут каждые десять минут: на них досчитываются остатки инсулина и
+    /// углеводов, а запись на пятнадцатой минуте гасит цифру, если обновления
+    /// так и не было, — старая цифра на циферблате опаснее, чем серая.
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
         Task {
             let now = await Feed.loadOrCached()
-            var entries = [Entry(date: .now, now: now)]
-            var next = Date.now.addingTimeInterval(5 * 60)
+            let start = Date.now
+            var dates = (0...6).map { start.addingTimeInterval(Double($0) * 10 * 60) }
+            var next = start.addingTimeInterval(5 * 60)
 
             if let latest = now?.latest {
                 let stale = Date(timeIntervalSince1970: latest.t + Glucose.staleAfter)
-                if stale > .now {
-                    entries.append(Entry(date: stale, now: now))
+                if stale > start {
+                    dates.append(stale)
                 }
                 next = max(next, Date(timeIntervalSince1970: latest.t + 5 * 60 + 30))
             }
 
+            let entries = dates.sorted().map { Entry(date: $0, now: now) }
             completion(Timeline(entries: entries, policy: .after(next)))
         }
     }
@@ -127,10 +130,10 @@ private struct Rectangular: View {
 
     private var activeLine: String {
         var parts: [String] = []
-        if let insulin = Now.live(now.active.insulin, at: date) {
+        if let insulin = now.live(now.active.insulin, at: date) {
             parts.append(String(format: "инс %.1f ед", insulin.left))
         }
-        if let carbs = Now.live(now.active.carbs, at: date) {
+        if let carbs = now.live(now.active.carbs, at: date) {
             parts.append(String(format: "угл %.0f г", carbs.left))
         }
         return parts.isEmpty ? " " : parts.joined(separator: " · ")
@@ -148,6 +151,115 @@ struct GlucoseComplication: Widget {
         .configurationDisplayName("Глюкоза")
         .description("Текущий сахар, тренд, прогноз и активные инсулин с углеводами.")
         .supportedFamilies([.accessoryRectangular, .accessoryCircular, .accessoryCorner, .accessoryInline])
+    }
+}
+
+/// Цифра со стрелкой и кривая последних трёх часов — главное, что видно на
+/// странице, в одном прямоугольнике.
+struct ChartComplication: Widget {
+    let kind = "ChartComplication"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            ChartComplicationView(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+        .configurationDisplayName("График")
+        .description("Сахар и кривая за три часа с прогнозом.")
+        .supportedFamilies([.accessoryRectangular])
+    }
+}
+
+struct ChartComplicationView: View {
+    let entry: Entry
+
+    var body: some View {
+        if let now = entry.now, let latest = now.latest {
+            let stale = now.isStale(at: entry.date)
+
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(Glucose.mmol(latest.mgdl))
+                        .font(.system(.headline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(stale ? .gray : Glucose.color(latest.mgdl, now.target))
+                        .widgetAccentable()
+                    Text(stale ? "" : Glucose.arrow(latest.rate))
+                        .font(.caption)
+                    Spacer(minLength: 0)
+                    Text(Date(timeIntervalSince1970: latest.t), style: .timer)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                }
+                Sparkline(now: now, date: entry.date)
+            }
+        } else {
+            Text("—")
+                .foregroundStyle(.gray)
+        }
+    }
+}
+
+enum DoseKind: String {
+    case insulin = "InsulinComplication"
+    case carbs = "CarbsComplication"
+}
+
+/// Сколько осталось от активной дозы — кольцом, как заряд батареи. Widget
+/// создаётся без аргументов, поэтому вид дозы — отдельным типом на каждую.
+private func doseConfiguration(_ kind: DoseKind) -> some WidgetConfiguration {
+    StaticConfiguration(kind: kind.rawValue, provider: Provider()) { entry in
+        DoseView(entry: entry, kind: kind)
+            .containerBackground(.fill.tertiary, for: .widget)
+    }
+    .configurationDisplayName(kind == .insulin ? "Инсулин" : "Углеводы")
+    .description(kind == .insulin ? "Сколько болюсного инсулина ещё действует." : "Сколько углеводов ещё всасывается.")
+    .supportedFamilies([.accessoryCircular, .accessoryCorner])
+}
+
+struct InsulinComplication: Widget {
+    var body: some WidgetConfiguration { doseConfiguration(.insulin) }
+}
+
+struct CarbsComplication: Widget {
+    var body: some WidgetConfiguration { doseConfiguration(.carbs) }
+}
+
+struct DoseView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: Entry
+    let kind: DoseKind
+
+    var body: some View {
+        let active = entry.now?.active
+        let dose = entry.now?.live(kind == .insulin ? active?.insulin : active?.carbs, at: entry.date)
+        let left = dose?.left ?? 0
+        let of = max(dose?.of ?? 1, left)
+        let value = kind == .insulin ? String(format: "%.1f", left) : String(format: "%.0f", left)
+        let unit = kind == .insulin ? "ед" : "г"
+        let tint: Color = kind == .insulin ? .cyan : .orange
+
+        switch family {
+        case .accessoryCorner:
+            Text(value)
+                .font(.system(.title3, design: .rounded).weight(.semibold))
+                .foregroundStyle(tint)
+                .widgetLabel {
+                    Gauge(value: left, in: 0...of) {
+                        Text(unit)
+                    }
+                    .tint(tint)
+                }
+        default:
+            Gauge(value: left, in: 0...of) {
+                Text(unit)
+            } currentValueLabel: {
+                Text(value)
+            }
+            .gaugeStyle(.accessoryCircularCapacity)
+            .tint(tint)
+            .widgetAccentable()
+        }
     }
 }
 
@@ -177,6 +289,18 @@ private let sample = Now(
 
 #Preview(as: .accessoryCircular) {
     GlucoseComplication()
+} timeline: {
+    Entry(date: .now, now: sample)
+}
+
+#Preview(as: .accessoryRectangular) {
+    ChartComplication()
+} timeline: {
+    Entry(date: .now, now: sample)
+}
+
+#Preview(as: .accessoryCircular) {
+    InsulinComplication()
 } timeline: {
     Entry(date: .now, now: sample)
 }

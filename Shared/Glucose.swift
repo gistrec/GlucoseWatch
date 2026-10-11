@@ -180,9 +180,14 @@ extension Now {
         return max(warning, 40)
     }
 
-    /// Активная доза, если её действие ещё не кончилось.
-    static func live(_ dose: Dose?, at date: Date) -> Dose? {
-        guard let dose, dose.left > 0, dose.until > date.timeIntervalSince1970 else { return nil }
-        return dose
+    /// Активная доза на момент ``date``. Остаток в выжимке посчитан на её
+    /// сборку, а циферблат обновляется реже; между обновлениями он убывает
+    /// линейно до конца действия — грубо, но лучше застывшей цифры.
+    func live(_ dose: Dose?, at date: Date) -> Dose? {
+        guard let dose, dose.until > generatedAt else { return nil }
+        let share = (dose.until - date.timeIntervalSince1970) / (dose.until - generatedAt)
+        let left = dose.left * min(max(share, 0), 1)
+        guard left >= 0.05 else { return nil }
+        return Dose(left: left, of: dose.of, until: dose.until)
     }
 }
