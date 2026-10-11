@@ -23,6 +23,9 @@ struct Entry: TimelineEntry {
 }
 
 struct Provider: TimelineProvider {
+    /// Какой виджет спрашивает — для журнала пробуждений.
+    let kind: String
+
     func placeholder(in context: Context) -> Entry {
         Entry(date: .now, now: Feed.cached)
     }
@@ -40,7 +43,9 @@ struct Provider: TimelineProvider {
     /// так и не было, — старая цифра на циферблате опаснее, чем серая.
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
         Task {
-            let now = await Feed.loadOrCached()
+            let fresh = try? await Feed.load()
+            let now = fresh ?? Feed.cached
+            ReloadLog.record(kind: kind, fetched: fresh != nil, reading: now?.latest?.t)
             let start = Date.now
             var dates = (0...12).map { start.addingTimeInterval(Double($0) * 5 * 60) }
             var next = start.addingTimeInterval(5 * 60)
@@ -222,7 +227,7 @@ struct GlucoseComplication: Widget {
     let kind = "GlucoseComplication"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+        StaticConfiguration(kind: kind, provider: Provider(kind: kind)) { entry in
             ComplicationView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
@@ -237,7 +242,7 @@ struct ChartComplication: Widget {
     let kind = "ChartComplication"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+        StaticConfiguration(kind: kind, provider: Provider(kind: kind)) { entry in
             ChartComplicationView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
@@ -278,7 +283,7 @@ enum DoseKind: String {
 /// Сколько осталось от активной дозы — кольцом, как заряд батареи. Widget
 /// создаётся без аргументов, поэтому вид дозы — отдельным типом на каждую.
 private func doseConfiguration(_ kind: DoseKind) -> some WidgetConfiguration {
-    StaticConfiguration(kind: kind.rawValue, provider: Provider()) { entry in
+    StaticConfiguration(kind: kind.rawValue, provider: Provider(kind: kind.rawValue)) { entry in
         DoseView(entry: entry, kind: kind)
             .containerBackground(.fill.tertiary, for: .widget)
     }

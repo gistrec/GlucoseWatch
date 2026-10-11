@@ -98,6 +98,8 @@ private struct Reading: View {
             }
 
             day
+
+            ReloadSummary(date: date)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -123,6 +125,52 @@ private struct Reading: View {
 
     private func age(_ minutes: Int) -> String {
         minutes < 1 ? "только что" : "\(minutes) мин назад"
+    }
+}
+
+/// Как часто система будит complication: по каждому виджету число
+/// пробуждений за сутки и медианный интервал, ниже последние пробуждения
+/// с возрастом замера, который они показали.
+private struct ReloadSummary: View {
+    let date: Date
+
+    private static let names = [
+        "GlucoseComplication": "Глюкоза",
+        "ChartComplication": "График",
+        "InsulinComplication": "Инсулин",
+        "CarbsComplication": "Углеводы",
+    ]
+
+    var body: some View {
+        let since = date.addingTimeInterval(-24 * 3600)
+        let records = ReloadLog.records
+        let day = records.filter { $0.at >= since.timeIntervalSince1970 }
+        let kinds = Self.names.keys.sorted().filter { kind in day.contains { $0.kind == kind } }
+
+        if !records.isEmpty {
+            Divider()
+            Text("Обновления циферблата")
+                .font(.footnote.weight(.semibold))
+            ForEach(kinds, id: \.self) { kind in
+                let count = day.filter { $0.kind == kind }.count
+                let median = ReloadLog.medianInterval(kind: kind, since: since)
+                Row(title: Self.names[kind] ?? kind,
+                    value: "\(count) за сутки" + (median.map { String(format: " · ~%.0f мин", $0) } ?? ""))
+            }
+            ForEach(Array(records.suffix(8).reversed().enumerated()), id: \.offset) { _, record in
+                let at = Date(timeIntervalSince1970: record.at)
+                let reading = record.reading.map { Glucose.short(Date(timeIntervalSince1970: $0), at: at) } ?? "—"
+                HStack {
+                    Text(at, format: .dateTime.hour().minute())
+                    Text(Self.names[record.kind] ?? record.kind)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(record.fetched ? "замер \(reading)" : "нет сети")
+                        .foregroundStyle(record.fetched ? Color.secondary : Color.orange)
+                }
+                .font(.caption2)
+            }
+        }
     }
 }
 
