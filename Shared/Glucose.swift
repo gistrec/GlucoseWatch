@@ -159,6 +159,32 @@ enum Glucose {
         return "↓"
     }
 
+    /// Цвета зон для линии. Градиент кладётся на рамку линии, а не на весь
+    /// график, поэтому пороги пересчитываются в доли от её собственного
+    /// минимума и максимума; пары одинаковых позиций дают резкую смену
+    /// цвета, а не перелив.
+    static func zones(_ values: [Double], _ target: Now.Target) -> LinearGradient {
+        let lowest = values.min() ?? 0
+        let highest = values.max() ?? 0
+        guard highest > lowest else {
+            return LinearGradient(colors: [color(lowest, target)], startPoint: .bottom, endPoint: .top)
+        }
+
+        func at(_ mgdl: Double) -> Double { min(max((mgdl - lowest) / (highest - lowest), 0), 1) }
+
+        let bands: [(from: Double, to: Double, color: Color)] = [
+            (-.infinity, target.low, .red),
+            (target.low, target.mid, .green),
+            (target.mid, target.high, .yellow),
+            (target.high, .infinity, .orange),
+        ]
+        let stops = bands.flatMap { band -> [Gradient.Stop] in
+            let from = at(band.from), to = at(band.to)
+            return to > from ? [.init(color: band.color, location: from), .init(color: band.color, location: to)] : []
+        }
+        return LinearGradient(stops: stops, startPoint: .bottom, endPoint: .top)
+    }
+
     /// Зоны как на графике: ниже диапазона, «зелёная» до верха нормы
     /// натощак, «жёлтая» до верхнего порога, выше — красная.
     static func color(_ mgdl: Double, _ target: Now.Target) -> Color {

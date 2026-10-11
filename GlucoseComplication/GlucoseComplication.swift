@@ -214,7 +214,7 @@ struct GlucoseComplication: Widget {
     }
 }
 
-/// Кривая последних трёх часов с коридором и прогнозом на весь слот.
+/// Кривая последних шести часов с порогами и прогнозом на весь слот.
 struct ChartComplication: Widget {
     let kind = "ChartComplication"
 
@@ -224,7 +224,7 @@ struct ChartComplication: Widget {
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("График")
-        .description("Кривая за три часа с прогнозом.")
+        .description("Кривая за шесть часов с порогами и прогнозом.")
         .supportedFamilies([.accessoryRectangular])
     }
 }

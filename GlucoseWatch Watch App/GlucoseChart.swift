@@ -44,7 +44,7 @@ struct GlucoseChart: View {
                         LineMark(x: .value("t", point.date), y: .value("mmol", point.mmol), series: .value("s", "c\(index)"))
                             .interpolationMethod(.monotone)
                             .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
-                            .foregroundStyle(zones(segment))
+                            .foregroundStyle(Glucose.zones(segment.map(\.mgdl), now.target))
                     }
                 }
 
@@ -145,31 +145,5 @@ struct GlucoseChart: View {
             .compactMap(\.first)
             .map { Date(timeIntervalSince1970: $0) }
             .filter { $0 >= start && $0 <= date }
-    }
-
-    /// Градиент кладётся на рамку линии, а не на весь график, поэтому пороги
-    /// зон пересчитываются в доли от её собственного минимума и максимума.
-    /// Пары одинаковых позиций дают резкую смену цвета, а не перелив.
-    private func zones(_ segment: [Point]) -> LinearGradient {
-        let lowest = segment.map(\.mgdl).min() ?? 0
-        let highest = segment.map(\.mgdl).max() ?? 0
-        let target = now.target
-        guard highest > lowest else {
-            return LinearGradient(colors: [Glucose.color(lowest, target)], startPoint: .bottom, endPoint: .top)
-        }
-
-        func at(_ mgdl: Double) -> Double { min(max((mgdl - lowest) / (highest - lowest), 0), 1) }
-
-        let bands: [(from: Double, to: Double, color: Color)] = [
-            (-.infinity, target.low, .red),
-            (target.low, target.mid, .green),
-            (target.mid, target.high, .yellow),
-            (target.high, .infinity, .orange),
-        ]
-        let stops = bands.flatMap { band -> [Gradient.Stop] in
-            let from = at(band.from), to = at(band.to)
-            return to > from ? [.init(color: band.color, location: from), .init(color: band.color, location: to)] : []
-        }
-        return LinearGradient(stops: stops, startPoint: .bottom, endPoint: .top)
     }
 }

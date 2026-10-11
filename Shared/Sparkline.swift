@@ -1,17 +1,18 @@
 import Charts
 import SwiftUI
 
-/// Кривая без осей для циферблата: коридор, линия последних часов и пунктир
-/// прогноза. Цвет одной линией, а не по зонам: на циферблате в режиме
-/// tinted система всё равно перекрасит её в один тон.
+/// Кривая для циферблата (Н8 из макетов): шесть часов, линия в цветах зон,
+/// пунктиры порогов с подписями и часы по низу. Цифры нет — она в верхнем
+/// слоте.
 struct Sparkline: View {
     let now: Now
     let date: Date
-    var hours = 3.0
+    var hours = 6.0
 
     var body: some View {
         let start = date.addingTimeInterval(-hours * 3600)
         let points = curve(from: start)
+        let pieces = Dictionary(grouping: points, by: \.2).sorted { $0.key < $1.key }.map(\.value)
         let tail = now.isStale(at: date) ? [] : forecast
         let values = points.map(\.1) + tail.map(\.1)
         let low = now.target.low / Glucose.mgdlPerMmol
@@ -19,29 +20,52 @@ struct Sparkline: View {
         let bottom = min(low - 0.5, values.min() ?? low)
         let top = max(high + 0.5, values.max() ?? high)
         let end = tail.last?.0 ?? date
+        let stale = now.isStale(at: date)
 
         Chart {
             RectangleMark(
                 xStart: .value("t", start), xEnd: .value("t", end),
                 yStart: .value("mmol", low), yEnd: .value("mmol", high)
             )
-            .foregroundStyle(.green.opacity(0.2))
+            .foregroundStyle(.green.opacity(0.16))
 
-            ForEach(Array(points.enumerated()), id: \.offset) { _, point in
-                LineMark(x: .value("t", point.0), y: .value("mmol", point.1), series: .value("s", "c\(point.2)"))
-                    .lineStyle(StrokeStyle(lineWidth: 1.5, lineCap: .round))
-                    .foregroundStyle(.primary)
+            ForEach([low, high], id: \.self) { level in
+                RuleMark(y: .value("mmol", level))
+                    .lineStyle(StrokeStyle(lineWidth: 0.6, dash: [2, 3]))
+                    .foregroundStyle(.gray)
+                    .annotation(position: .top, alignment: .trailing, spacing: 0) {
+                        Text(String(format: "%.1f", level))
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .foregroundStyle(.gray)
+                    }
+            }
+
+            ForEach(Array(pieces.enumerated()), id: \.offset) { index, piece in
+                ForEach(Array(piece.enumerated()), id: \.offset) { _, point in
+                    LineMark(x: .value("t", point.0), y: .value("mmol", point.1), series: .value("s", "c\(index)"))
+                        .lineStyle(StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
+                        .foregroundStyle(stale
+                            ? AnyShapeStyle(Color.gray)
+                            : AnyShapeStyle(Glucose.zones(piece.map { $0.1 * Glucose.mgdlPerMmol }, now.target)))
+                }
             }
             ForEach(Array(tail.enumerated()), id: \.offset) { _, point in
                 LineMark(x: .value("t", point.0), y: .value("mmol", point.1), series: .value("s", "forecast"))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 2]))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.7))
             }
         }
         .chartXScale(domain: start...end)
         .chartYScale(domain: bottom...top)
-        .chartXAxis(.hidden)
         .chartYAxis(.hidden)
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .hour)) { _ in
+                AxisGridLine().foregroundStyle(.gray.opacity(0.3))
+                AxisValueLabel(format: .dateTime.hour(.twoDigits(amPM: .omitted)), centered: false)
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .foregroundStyle(.gray)
+            }
+        }
     }
 
     /// Точки с номером куска: пропуск сенсора дольше четверти часа рвёт
