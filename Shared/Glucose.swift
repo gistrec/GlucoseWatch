@@ -141,12 +141,15 @@ enum Glucose {
         return "\(hours / 24) д \(hours % 24) ч"
     }
 
-    /// «45м», «1ч 44м», «2д» — под кольцом места на пять знаков.
+    /// «45м», «1ч 44м», «10ч», «2д». Под кольцом 44 pt: «1ч 55м» занимает
+    /// 45, а «10ч 55м» уже 54 и отъедает ширину у цифры глюкозы, поэтому
+    /// с десяти часов минуты не пишутся — в такой давности они не важны.
     static func short(_ moment: Date, at date: Date) -> String {
         let minutes = max(Int(date.timeIntervalSince(moment) / 60), 0)
         if minutes < 60 { return "\(minutes)м" }
         let hours = minutes / 60
-        return hours < 24 ? "\(hours)ч \(minutes % 60)м" : "\(hours / 24)д"
+        if hours < 10 { return "\(hours)ч \(minutes % 60)м" }
+        return hours < 24 ? "\(hours)ч" : "\(hours / 24)д"
     }
 
     /// Пороги стрелки как на странице (format.js, trendArrow).
