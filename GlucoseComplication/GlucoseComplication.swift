@@ -114,28 +114,30 @@ private struct Rectangular: View {
     let since: Date
     let date: Date
 
-    /// Цифра слева, справа кольца остатков инсулина и еды, под каждым —
-    /// давность последней записи. Инсулин и еду различают цвета колец, так
-    /// что единицы не подписаны. Риск гипо встаёт под цифру вместо стрелки.
+    /// Цифра со стрелкой слева, справа кольца остатков инсулина и еды, под
+    /// каждым — давность последней записи. Инсулин и еду различают цвета
+    /// колец, так что единицы не подписаны. Под цифрой строка появляется,
+    /// только когда есть что сказать: риск гипо или устаревшие данные.
     var body: some View {
-        HStack(alignment: .center, spacing: 6) {
+        HStack(alignment: .center, spacing: 4) {
             VStack(alignment: .leading, spacing: 0) {
-                Text(value)
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(color)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .widgetAccentable()
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(value)
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                    Text(arrow)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                }
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .widgetAccentable()
+
                 if !stale, let fall = now.fallRisk {
                     Text("↓ \(Glucose.mmol(fall))")
                         .font(.system(.footnote, design: .rounded).weight(.semibold))
                         .foregroundStyle(.red)
                 } else if stale {
                     Age(since: since, stale: stale, date: date)
-                } else {
-                    Text(arrow)
-                        .font(.system(.headline, design: .rounded))
-                        .foregroundStyle(color)
                 }
             }
             .layoutPriority(1)
@@ -151,6 +153,7 @@ private struct Rectangular: View {
 }
 
 /// Кольцо остатка дозы с числом внутри и давностью последней записи под ним.
+/// В полный размер и с белой давностью: ужатые до 72 % читались плохо.
 private struct Ring: View {
     let dose: Now.Dose?
     let last: (date: Date, amount: Double)?
@@ -164,16 +167,16 @@ private struct Ring: View {
                 EmptyView()
             } currentValueLabel: {
                 Text(dose.map { String(format: format, $0.left) } ?? "—")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .minimumScaleFactor(0.7)
             }
             .gaugeStyle(.accessoryCircularCapacity)
             .tint(tint)
-            .scaleEffect(0.72)
-            .frame(width: 34, height: 34)
+            .frame(width: 44, height: 44)
 
             Text(last.map { Glucose.short($0.date, at: date) } ?? "—")
-                .font(.system(size: 11, weight: .semibold, design: .rounded).monospacedDigit())
-                .foregroundStyle(.secondary)
+                .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(.primary)
                 .lineLimit(1)
                 .fixedSize()
         }
