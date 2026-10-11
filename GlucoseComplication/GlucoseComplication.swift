@@ -198,10 +198,10 @@ private struct Ring: View {
     }
 }
 
-/// Давность замера — только когда цифра посерела, по записи таймлайна
-/// (системная .relative под час тикает секундами). Пока данные свежие,
+/// Давность замера — только когда цифра посерела. Пока данные свежие,
 /// тикающий таймер на циферблате лишь отвлекает: свежесть и так видна по
-/// цвету. Ширина задана явно, чтобы строка не выдавливала цифру.
+/// цвету. Коротко («15м», «1ч 5м») и всегда в одну строку: с жёсткой
+/// шириной «15 мин» обрезалось до «15...» и переносилось на две строки.
 private struct Age: View {
     let since: Date
     let stale: Bool
@@ -209,11 +209,11 @@ private struct Age: View {
 
     var body: some View {
         if stale {
-            Text(Glucose.ago(since, at: date))
-                .font(.caption2.monospacedDigit())
+            Text(Glucose.short(since, at: date))
+                .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
                 .foregroundStyle(.orange)
-                .multilineTextAlignment(.trailing)
-                .frame(width: 44, alignment: .trailing)
+                .lineLimit(1)
+                .fixedSize()
         }
     }
 }
@@ -260,6 +260,8 @@ struct ChartComplicationView: View {
             Sparkline(now: now, date: entry.date)
                 .overlay(alignment: .topTrailing) {
                     Age(since: Date(timeIntervalSince1970: latest.t), stale: stale, date: entry.date)
+                        .padding(.horizontal, 3)
+                        .background(.black, in: RoundedRectangle(cornerRadius: 4))
                 }
         } else {
             Text("—")
