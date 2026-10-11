@@ -46,6 +46,10 @@ struct ContentView: View {
     private func refresh(reloadComplications: Bool) async {
         do {
             let fresh = try await Feed.load()
+            // Отмена кооперативная: ответ мог прийти, когда экран уже погас
+            // или задача сменилась. Такой ответ старше следующего и не должен
+            // ни перезаписать его, ни перерисовать complication.
+            guard !Task.isCancelled else { return }
             let changed = fresh.latest?.t != now?.latest?.t
             now = fresh
             failed = false
