@@ -117,6 +117,15 @@ enum Glucose {
         String(format: "%.1f", mgdl / mgdlPerMmol)
     }
 
+    /// «45 мин», «2 ч 5 мин», «1 д 3 ч» — коротко, без секунд.
+    static func ago(_ moment: Date, at date: Date) -> String {
+        let minutes = max(Int(date.timeIntervalSince(moment) / 60), 0)
+        if minutes < 60 { return "\(minutes) мин" }
+        let hours = minutes / 60
+        if hours < 24 { return minutes % 60 == 0 ? "\(hours) ч" : "\(hours) ч \(minutes % 60) мин" }
+        return "\(hours / 24) д \(hours % 24) ч"
+    }
+
     /// Пороги стрелки как на странице (format.js, trendArrow).
     static func arrow(_ rate: Double?) -> String {
         guard let rate else { return "" }
@@ -178,6 +187,14 @@ extension Now {
 
         guard let warning, warning <= target.low else { return nil }
         return max(warning, 40)
+    }
+
+    /// Последняя запись журнала до ``date``: когда и сколько.
+    func last(_ lane: [[Double]]?, before date: Date) -> (date: Date, amount: Double)? {
+        guard let entry = (lane ?? []).last(where: { $0.count == 2 && $0[0] <= date.timeIntervalSince1970 }) else {
+            return nil
+        }
+        return (Date(timeIntervalSince1970: entry[0]), entry[1])
     }
 
     /// Активная доза на момент ``date``. Остаток в выжимке посчитан на её

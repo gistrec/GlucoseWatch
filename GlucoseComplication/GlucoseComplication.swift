@@ -19,14 +19,14 @@ struct Provider: TimelineProvider {
 
     /// Обновления раздаёт система — несколько десятков в сутки, а не каждые
     /// пять минут. Просим следующее к ожидаемому замеру, а до него записи
-    /// идут каждые десять минут: на них досчитываются остатки инсулина и
-    /// углеводов, а запись на пятнадцатой минуте гасит цифру, если обновления
+    /// идут каждые пять минут: на них досчитываются остатки инсулина и
+    /// углеводов и давность журнала, а запись на пятнадцатой минуте гасит цифру, если обновления
     /// так и не было, — старая цифра на циферблате опаснее, чем серая.
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
         Task {
             let now = await Feed.loadOrCached()
             let start = Date.now
-            var dates = (0...6).map { start.addingTimeInterval(Double($0) * 10 * 60) }
+            var dates = (0...12).map { start.addingTimeInterval(Double($0) * 5 * 60) }
             var next = start.addingTimeInterval(5 * 60)
 
             if let latest = now?.latest {
@@ -116,27 +116,28 @@ private struct Rectangular: View {
                 Text("↓ может упасть до \(Glucose.mmol(fall))")
                     .font(.caption2)
                     .foregroundStyle(.red)
-            } else if !stale, let in30 = now.forecast(minutes: 30) {
-                let in60 = now.forecast(minutes: 60).map { " · 60′ \(Glucose.mmol($0))" } ?? ""
-                Text("30′ \(Glucose.mmol(in30))\(in60)")
-                    .font(.caption2)
+            } else {
+                journal(now.last(now.events?.bolus, before: date), title: "Инсулин", unit: "ед", format: "%g")
             }
 
-            Text(activeLine)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            journal(now.last(now.events?.meals, before: date), title: "Еда", unit: "г", format: "%.0f")
         }
     }
 
-    private var activeLine: String {
-        var parts: [String] = []
-        if let insulin = now.live(now.active.insulin, at: date) {
-            parts.append(String(format: "инс %.1f ед", insulin.left))
+    /// «Инсулин 6 ед · 2 ч 5 мин»: сколько и как давно. Давность — своя, по
+    /// записи таймлайна: системная .relative под час тикает секундами.
+    @ViewBuilder
+    private func journal(_ entry: (date: Date, amount: Double)?, title: String, unit: String, format: String) -> some View {
+        if let entry {
+            Text("\(title) \(String(format: format, entry.amount)) \(unit) · \(Glucose.ago(entry.date, at: date))")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        } else {
+            Text("\(title) —")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
-        if let carbs = now.live(now.active.carbs, at: date) {
-            parts.append(String(format: "угл %.0f г", carbs.left))
-        }
-        return parts.isEmpty ? " " : parts.joined(separator: " · ")
     }
 }
 
@@ -149,7 +150,7 @@ struct GlucoseComplication: Widget {
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("Глюкоза")
-        .description("Текущий сахар, тренд, прогноз и активные инсулин с углеводами.")
+        .description("Сахар, тренд и когда были последние инсулин и еда.")
         .supportedFamilies([.accessoryRectangular, .accessoryCircular, .accessoryCorner, .accessoryInline])
     }
 }
