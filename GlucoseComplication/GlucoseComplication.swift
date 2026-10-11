@@ -114,10 +114,9 @@ private struct Rectangular: View {
     let since: Date
     let date: Date
 
-    /// Цифра со стрелкой слева, справа кольца остатков инсулина и еды, под
-    /// каждым — давность последней записи. Инсулин и еду различают цвета
-    /// колец, так что единицы не подписаны. Под цифрой строка появляется,
-    /// только когда есть что сказать: риск гипо или устаревшие данные.
+    /// Цифра со стрелкой слева, под ней прогноз на 30 минут; справа кольца
+    /// остатков инсулина и еды, под каждым — давность последней записи.
+    /// Инсулин и еду различают цвета колец, так что единицы не подписаны.
     var body: some View {
         HStack(alignment: .center, spacing: 4) {
             VStack(alignment: .leading, spacing: 0) {
@@ -132,12 +131,10 @@ private struct Rectangular: View {
                 .minimumScaleFactor(0.6)
                 .widgetAccentable()
 
-                if !stale, let fall = now.fallRisk {
-                    Text("↓ \(Glucose.mmol(fall))")
-                        .font(.system(.footnote, design: .rounded).weight(.semibold))
-                        .foregroundStyle(.red)
-                } else if stale {
+                if stale {
                     Age(since: since, stale: stale, date: date)
+                } else {
+                    forecast
                 }
             }
             .layoutPriority(1)
@@ -149,6 +146,21 @@ private struct Rectangular: View {
             Ring(dose: now.live(now.active.carbs, at: date), last: now.last(now.events?.meals, before: date),
                  tint: .orange, format: "%.0f", date: date)
         }
+    }
+
+    /// «30′ 4.7» — прогноз модели через полчаса. При риске гипо вместо него
+    /// красная нижняя граница «30′ ↓3.8»: вместе они не влезают (80 pt при
+    /// ~70 свободных), а граница в этот момент важнее.
+    private var forecast: some View {
+        let fall = now.fallRisk
+        let text = fall.map { "30′ ↓\(Glucose.mmol($0))" }
+            ?? now.forecast(minutes: 30).map { "30′ \(Glucose.mmol($0))" }
+            ?? "30′ —"
+        return Text(text)
+            .font(.system(size: 13, weight: .semibold, design: .rounded).monospacedDigit())
+            .foregroundStyle(fall == nil ? Color.secondary : Color.red)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
     }
 }
 
