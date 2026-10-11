@@ -24,22 +24,43 @@ struct ContentView: View {
                 }
             }
         }
-        .task { await refresh() }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                Task { await refresh() }
+        // Пока экран активен — запрос раз в минуту: поднял руку при открытом
+        // приложении и видишь цифру не старше минуты-двух. Смена фазы
+        // перезапускает задачу: в неактивном экране и в фоне опрос стоит,
+        // а возвращение сразу начинается с запроса.
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            var opened = true
+            while !Task.isCancelled {
+                await refresh(reloadComplications: opened)
+                opened = false
+                try? await Task.sleep(for: .seconds(60))
             }
         }
     }
 
-    private func refresh() async {
+    /// ``reloadComplications`` — при открытии: у complication свой кэш, и она
+    /// может отставать, даже когда у приложения цифра та же. Дальше — только
+    /// на новом замере: из приложения на переднем плане перезагрузки не
+    /// тратят бюджет виджета, но без нового замера дёргать его незачем.
+    private func refresh(reloadComplications: Bool) async {
         do {
-            now = try await Feed.load()
+            let fresh = try await Feed.load()
+            // Отмена кооперативная: ответ мог прийти, когда экран уже погас
+            // или задача сменилась. Такой ответ старше следующего и не должен
+            // ни перезаписать его, ни перерисовать complication.
+            guard !Task.isCancelled else { return }
+            let changed = fresh.latest?.t != now?.latest?.t
+            now = fresh
             failed = false
-            // Открыл приложение — пусть и циферблат увидит свежую цифру.
-            WidgetCenter.shared.reloadAllTimelines()
+            if reloadComplications || changed {
+                WidgetCenter.shared.reloadAllTimelines()
+            }
         } catch {
-            failed = true
+            // Отмена — экран ушёл в неактивный, а не сеть пропала.
+            if !Task.isCancelled {
+                failed = true
+            }
         }
     }
 }
