@@ -148,14 +148,17 @@ private struct Rectangular: View {
         }
     }
 
-    /// «30′ 4.7» — прогноз модели через полчаса. При риске гипо вместо него
-    /// красная нижняя граница «30′ ↓3.8»: вместе они не влезают (80 pt при
-    /// ~70 свободных), а граница в этот момент важнее.
+    /// «4.7 → 4.4» — прогноз модели через полчаса и через час. Подписи
+    /// «30′ … 60′» не влезают (94 pt при ~70 свободных), стрелка читается
+    /// как «потом». При риске гипо — красная нижняя граница «30′ ↓3.8»:
+    /// её проверяли только на получасе, на часе ложных тревог втрое больше.
     private var forecast: some View {
         let fall = now.fallRisk
+        let in30 = now.forecast(minutes: 30).map(Glucose.mmol)
+        let in60 = now.forecast(minutes: 60).map(Glucose.mmol)
         let text = fall.map { "30′ ↓\(Glucose.mmol($0))" }
-            ?? now.forecast(minutes: 30).map { "30′ \(Glucose.mmol($0))" }
-            ?? "30′ —"
+            ?? in30.map { first in in60.map { "\(first) → \($0)" } ?? first }
+            ?? "прогноза нет"
         return Text(text)
             .font(.system(size: 13, weight: .semibold, design: .rounded).monospacedDigit())
             .foregroundStyle(fall == nil ? Color.secondary : Color.red)
