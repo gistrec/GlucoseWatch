@@ -58,6 +58,19 @@ struct GlucoseChart: View {
                     .lineStyle(StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
                     .foregroundStyle(.gray)
 
+                // Пороги подписаны на самих линиях, внутри графика: ось справа
+                // отъедала ширину, и кривая не доходила до края экрана.
+                ForEach([low, high], id: \.self) { level in
+                    RuleMark(y: .value("mmol", level))
+                        .lineStyle(StrokeStyle(lineWidth: 0.6, dash: [2, 3]))
+                        .foregroundStyle(.gray.opacity(0.6))
+                        .annotation(position: .top, alignment: .trailing, spacing: 1) {
+                            Text(String(format: "%.1f", level))
+                                .font(.system(size: 9, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.gray)
+                        }
+                }
+
                 ForEach(events(from: start, in: now.events?.meals), id: \.self) { t in
                     PointMark(x: .value("t", t), y: .value("mmol", bottom + 0.3))
                         .symbolSize(18)
@@ -72,16 +85,7 @@ struct GlucoseChart: View {
             }
             .chartXScale(domain: start...end)
             .chartYScale(domain: bottom...top)
-            .chartYAxis {
-                AxisMarks(position: .trailing, values: [low, high]) { value in
-                    AxisGridLine().foregroundStyle(.gray.opacity(0.3))
-                    AxisValueLabel {
-                        if let mmol = value.as(Double.self) {
-                            Text(String(format: "%.1f", mmol)).font(.system(size: 9))
-                        }
-                    }
-                }
-            }
+            .chartYAxis(.hidden)
             .chartXAxis {
                 AxisMarks(values: .stride(by: .hour, count: hours <= 6 ? 1 : hours <= 12 ? 3 : 6)) { _ in
                     AxisGridLine().foregroundStyle(.gray.opacity(0.2))
