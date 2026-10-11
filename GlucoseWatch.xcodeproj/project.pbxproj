@@ -83,6 +83,11 @@
 			path = GlucoseComplication;
 			sourceTree = "<group>";
 		};
+		5F1B1FC0307BE200008BFC76 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				5F1B1F8C307BE03E008BFC76 /* GlucoseWatch Watch App */,
+				5F1B1FC0307BE200008BFC76 /* Shared */,
 				5F1B1FA6307BE103008BFC76 /* GlucoseComplication */,
 				5F1B1FA1307BE103008BFC76 /* Frameworks */,
 				5F1B1F83307BE03E008BFC76 /* Products */,
@@ -166,6 +172,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				5F1B1F8C307BE03E008BFC76 /* GlucoseWatch Watch App */,
+				5F1B1FC0307BE200008BFC76 /* Shared */,
 			);
 			name = "GlucoseWatch Watch App";
 			productName = "GlucoseWatch Watch App";
@@ -184,6 +191,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				5F1B1FA6307BE103008BFC76 /* GlucoseComplication */,
+				5F1B1FC0307BE200008BFC76 /* Shared */,
 			);
 			name = GlucoseComplicationExtension;
 			productName = GlucoseComplicationExtension;
@@ -422,7 +430,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Debug;
 		};
@@ -456,7 +464,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				VALIDATE_PRODUCT = YES;
-				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Release;
 		};
@@ -526,7 +534,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Debug;
 		};
@@ -560,7 +568,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				VALIDATE_PRODUCT = YES;
-				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Release;
 		};
