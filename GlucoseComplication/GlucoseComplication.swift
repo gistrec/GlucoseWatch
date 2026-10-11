@@ -115,21 +115,20 @@ private struct Rectangular: View {
     let date: Date
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(value) \(arrow)")
-                    .font(.system(.title2, design: .rounded).weight(.semibold))
+                    .font(.system(.headline, design: .rounded).weight(.semibold))
                     .foregroundStyle(color)
+                    .lineLimit(1)
+                    .layoutPriority(1)
                     .widgetAccentable()
                 Spacer(minLength: 0)
-                Text(since, style: .timer)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.trailing)
+                Age(since: since)
             }
 
             if !stale, let fall = now.fallRisk {
-                Text("↓ может упасть до \(Glucose.mmol(fall))")
+                Text("↓ до \(Glucose.mmol(fall)) за 30 мин")
                     .font(.caption2)
                     .foregroundStyle(.red)
             } else {
@@ -154,6 +153,20 @@ private struct Rectangular: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
+    }
+}
+
+/// Давность замера тикающим таймером. Ширина задана явно: таймер в
+/// WidgetKit забирает всю свободную ширину строки и выдавливает цифру.
+private struct Age: View {
+    let since: Date
+
+    var body: some View {
+        Text(since, style: .timer)
+            .font(.caption2.monospacedDigit())
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.trailing)
+            .frame(width: 36, alignment: .trailing)
     }
 }
 
@@ -203,10 +216,7 @@ struct ChartComplicationView: View {
                     Text(stale ? "" : Glucose.arrow(latest.rate))
                         .font(.caption)
                     Spacer(minLength: 0)
-                    Text(Date(timeIntervalSince1970: latest.t), style: .timer)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.trailing)
+                    Age(since: Date(timeIntervalSince1970: latest.t))
                 }
                 Sparkline(now: now, date: entry.date)
             }
