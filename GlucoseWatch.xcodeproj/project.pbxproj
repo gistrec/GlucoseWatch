@@ -1,0 +1,606 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 110;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5F1B1F89307BE03E008BFC76 /* GlucoseWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 5F1B1F88307BE03E008BFC76 /* GlucoseWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		5F1B1FA3307BE103008BFC76 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1B1FA2307BE103008BFC76 /* WidgetKit.framework */; };
+		5F1B1FA5307BE103008BFC76 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1B1FA4307BE103008BFC76 /* SwiftUI.framework */; };
+		5F1B1FB0307BE106008BFC76 /* GlucoseComplicationExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5F1B1FA0307BE103008BFC76 /* GlucoseComplicationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5F1B1F8A307BE03E008BFC76 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5F1B1F7C307BE03D008BFC76 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5F1B1F87307BE03E008BFC76;
+			remoteInfo = "GlucoseWatch Watch App";
+		};
+		5F1B1FAE307BE106008BFC76 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5F1B1F7C307BE03D008BFC76 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5F1B1F9F307BE103008BFC76;
+			remoteInfo = GlucoseComplicationExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5F1B1F98307BE040008BFC76 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolder = Product;
+			files = (
+				5F1B1F89307BE03E008BFC76 /* GlucoseWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+		};
+		5F1B1FB5307BE106008BFC76 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				5F1B1FB0307BE106008BFC76 /* GlucoseComplicationExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		5F1B1F82307BE03E008BFC76 /* GlucoseWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GlucoseWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F1B1F88307BE03E008BFC76 /* GlucoseWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "GlucoseWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F1B1FA0307BE103008BFC76 /* GlucoseComplicationExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GlucoseComplicationExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F1B1FA2307BE103008BFC76 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		5F1B1FA4307BE103008BFC76 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5F1B1FB1307BE106008BFC76 /* Exceptions for "GlucoseComplication" folder in "GlucoseComplicationExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5F1B1F9F307BE103008BFC76 /* GlucoseComplicationExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5F1B1F8C307BE03E008BFC76 /* GlucoseWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "GlucoseWatch Watch App";
+			sourceTree = "<group>";
+		};
+		5F1B1FA6307BE103008BFC76 /* GlucoseComplication */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5F1B1FB1307BE106008BFC76 /* Exceptions for "GlucoseComplication" folder in "GlucoseComplicationExtension" target */,
+			);
+			path = GlucoseComplication;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5F1B1F85307BE03E008BFC76 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		5F1B1F9D307BE103008BFC76 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				5F1B1FA5307BE103008BFC76 /* SwiftUI.framework in Frameworks */,
+				5F1B1FA3307BE103008BFC76 /* WidgetKit.framework in Frameworks */,
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5F1B1F7B307BE03D008BFC76 = {
+			isa = PBXGroup;
+			children = (
+				5F1B1F8C307BE03E008BFC76 /* GlucoseWatch Watch App */,
+				5F1B1FA6307BE103008BFC76 /* GlucoseComplication */,
+				5F1B1FA1307BE103008BFC76 /* Frameworks */,
+				5F1B1F83307BE03E008BFC76 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5F1B1F83307BE03E008BFC76 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5F1B1F82307BE03E008BFC76 /* GlucoseWatch.app */,
+				5F1B1F88307BE03E008BFC76 /* GlucoseWatch Watch App.app */,
+				5F1B1FA0307BE103008BFC76 /* GlucoseComplicationExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5F1B1FA1307BE103008BFC76 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				5F1B1FA2307BE103008BFC76 /* WidgetKit.framework */,
+				5F1B1FA4307BE103008BFC76 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5F1B1F81307BE03E008BFC76 /* GlucoseWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5F1B1F99307BE040008BFC76 /* Build configuration list for PBXNativeTarget "GlucoseWatch" */;
+			buildPhases = (
+				5F1B1F80307BE03E008BFC76 /* Resources */,
+				5F1B1F98307BE040008BFC76 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5F1B1F8B307BE03E008BFC76 /* PBXTargetDependency */,
+			);
+			name = GlucoseWatch;
+			productName = GlucoseWatch;
+			productReference = 5F1B1F82307BE03E008BFC76 /* GlucoseWatch.app */;
+			productType = "com.apple.product-type.application.watchapp2-container";
+		};
+		5F1B1F87307BE03E008BFC76 /* GlucoseWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5F1B1F95307BE040008BFC76 /* Build configuration list for PBXNativeTarget "GlucoseWatch Watch App" */;
+			buildPhases = (
+				5F1B1F84307BE03E008BFC76 /* Sources */,
+				5F1B1F85307BE03E008BFC76 /* Frameworks */,
+				5F1B1F86307BE03E008BFC76 /* Resources */,
+				5F1B1FB5307BE106008BFC76 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5F1B1FAF307BE106008BFC76 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5F1B1F8C307BE03E008BFC76 /* GlucoseWatch Watch App */,
+			);
+			name = "GlucoseWatch Watch App";
+			productName = "GlucoseWatch Watch App";
+			productReference = 5F1B1F88307BE03E008BFC76 /* GlucoseWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5F1B1F9F307BE103008BFC76 /* GlucoseComplicationExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5F1B1FB2307BE106008BFC76 /* Build configuration list for PBXNativeTarget "GlucoseComplicationExtension" */;
+			buildPhases = (
+				5F1B1F9C307BE103008BFC76 /* Sources */,
+				5F1B1F9D307BE103008BFC76 /* Frameworks */,
+				5F1B1F9E307BE103008BFC76 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				5F1B1FA6307BE103008BFC76 /* GlucoseComplication */,
+			);
+			name = GlucoseComplicationExtension;
+			productName = GlucoseComplicationExtension;
+			productReference = 5F1B1FA0307BE103008BFC76 /* GlucoseComplicationExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5F1B1F7C307BE03D008BFC76 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					5F1B1F81307BE03E008BFC76 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					5F1B1F87307BE03E008BFC76 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					5F1B1F9F307BE103008BFC76 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = 5F1B1F7F307BE03D008BFC76 /* Build configuration list for PBXProject "GlucoseWatch" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5F1B1F7B307BE03D008BFC76;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5F1B1F83307BE03E008BFC76 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5F1B1F81307BE03E008BFC76 /* GlucoseWatch */,
+				5F1B1F87307BE03E008BFC76 /* GlucoseWatch Watch App */,
+				5F1B1F9F307BE103008BFC76 /* GlucoseComplicationExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5F1B1F80307BE03E008BFC76 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		5F1B1F86307BE03E008BFC76 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		5F1B1F9E307BE103008BFC76 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5F1B1F84307BE03E008BFC76 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		5F1B1F9C307BE103008BFC76 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5F1B1F8B307BE03E008BFC76 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5F1B1F87307BE03E008BFC76 /* GlucoseWatch Watch App */;
+			targetProxy = 5F1B1F8A307BE03E008BFC76 /* PBXContainerItemProxy */;
+		};
+		5F1B1FAF307BE106008BFC76 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5F1B1F9F307BE103008BFC76 /* GlucoseComplicationExtension */;
+			targetProxy = 5F1B1FAE307BE106008BFC76 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5F1B1F93307BE040008BFC76 /* Debug configuration for PBXProject "GlucoseWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 7M742BNTH2;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5F1B1F94307BE040008BFC76 /* Release configuration for PBXProject "GlucoseWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 7M742BNTH2;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		5F1B1F96307BE040008BFC76 /* Debug configuration for PBXNativeTarget "GlucoseWatch Watch App" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M742BNTH2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = GlucoseWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.gistrec.GlucoseWatch.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		5F1B1F97307BE040008BFC76 /* Release configuration for PBXNativeTarget "GlucoseWatch Watch App" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M742BNTH2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = GlucoseWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.gistrec.GlucoseWatch.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		5F1B1F9A307BE040008BFC76 /* Debug configuration for PBXNativeTarget "GlucoseWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M742BNTH2;
+				INFOPLIST_KEY_CFBundleDisplayName = GlucoseWatch;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.gistrec.GlucoseWatch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5F1B1F9B307BE040008BFC76 /* Release configuration for PBXNativeTarget "GlucoseWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M742BNTH2;
+				INFOPLIST_KEY_CFBundleDisplayName = GlucoseWatch;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.gistrec.GlucoseWatch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		5F1B1FB3307BE106008BFC76 /* Debug configuration for PBXNativeTarget "GlucoseComplicationExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M742BNTH2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GlucoseComplication/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = GlucoseComplication;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.gistrec.GlucoseWatch.watchkitapp.GlucoseComplication;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		5F1B1FB4307BE106008BFC76 /* Release configuration for PBXNativeTarget "GlucoseComplicationExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M742BNTH2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GlucoseComplication/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = GlucoseComplication;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.gistrec.GlucoseWatch.watchkitapp.GlucoseComplication;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5F1B1F7F307BE03D008BFC76 /* Build configuration list for PBXProject "GlucoseWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F1B1F93307BE040008BFC76 /* Debug configuration for PBXProject "GlucoseWatch" */,
+				5F1B1F94307BE040008BFC76 /* Release configuration for PBXProject "GlucoseWatch" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		5F1B1F95307BE040008BFC76 /* Build configuration list for PBXNativeTarget "GlucoseWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F1B1F96307BE040008BFC76 /* Debug configuration for PBXNativeTarget "GlucoseWatch Watch App" */,
+				5F1B1F97307BE040008BFC76 /* Release configuration for PBXNativeTarget "GlucoseWatch Watch App" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		5F1B1F99307BE040008BFC76 /* Build configuration list for PBXNativeTarget "GlucoseWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F1B1F9A307BE040008BFC76 /* Debug configuration for PBXNativeTarget "GlucoseWatch" */,
+				5F1B1F9B307BE040008BFC76 /* Release configuration for PBXNativeTarget "GlucoseWatch" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		5F1B1FB2307BE106008BFC76 /* Build configuration list for PBXNativeTarget "GlucoseComplicationExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F1B1FB3307BE106008BFC76 /* Debug configuration for PBXNativeTarget "GlucoseComplicationExtension" */,
+				5F1B1FB4307BE106008BFC76 /* Release configuration for PBXNativeTarget "GlucoseComplicationExtension" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5F1B1F7C307BE03D008BFC76 /* Project object */;
+	validationLevel = 1;
+}
