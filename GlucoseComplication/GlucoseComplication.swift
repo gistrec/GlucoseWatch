@@ -114,44 +114,68 @@ private struct Rectangular: View {
     let since: Date
     let date: Date
 
+    /// Цифра слева, справа кольца остатков инсулина и еды, под каждым —
+    /// давность последней записи. Инсулин и еду различают цвета колец, так
+    /// что единицы не подписаны. Риск гипо встаёт под цифру вместо стрелки.
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("\(value) \(arrow)")
-                    .font(.system(.headline, design: .rounded).weight(.semibold))
+        HStack(alignment: .center, spacing: 6) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value)
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(color)
                     .lineLimit(1)
-                    .layoutPriority(1)
+                    .minimumScaleFactor(0.7)
                     .widgetAccentable()
-                Spacer(minLength: 0)
-                Age(since: since, stale: stale, date: date)
+                if !stale, let fall = now.fallRisk {
+                    Text("↓ \(Glucose.mmol(fall))")
+                        .font(.system(.footnote, design: .rounded).weight(.semibold))
+                        .foregroundStyle(.red)
+                } else if stale {
+                    Age(since: since, stale: stale, date: date)
+                } else {
+                    Text(arrow)
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(color)
+                }
             }
+            .layoutPriority(1)
 
-            if !stale, let fall = now.fallRisk {
-                Text("↓ до \(Glucose.mmol(fall)) за 30 мин")
-                    .font(.caption2)
-                    .foregroundStyle(.red)
-            } else {
-                journal(now.last(now.events?.bolus, before: date), title: "Инсулин", unit: "ед", format: "%g")
-            }
+            Spacer(minLength: 0)
 
-            journal(now.last(now.events?.meals, before: date), title: "Еда", unit: "г", format: "%.0f")
+            Ring(dose: now.live(now.active.insulin, at: date), last: now.last(now.events?.bolus, before: date),
+                 tint: .cyan, format: "%.1f", date: date)
+            Ring(dose: now.live(now.active.carbs, at: date), last: now.last(now.events?.meals, before: date),
+                 tint: .orange, format: "%.0f", date: date)
         }
     }
+}
 
-    /// «Инсулин 6 ед · 2 ч 5 мин»: сколько и как давно. Давность — своя, по
-    /// записи таймлайна: системная .relative под час тикает секундами.
-    @ViewBuilder
-    private func journal(_ entry: (date: Date, amount: Double)?, title: String, unit: String, format: String) -> some View {
-        if let entry {
-            Text("\(title) \(String(format: format, entry.amount)) \(unit) · \(Glucose.ago(entry.date, at: date))")
-                .font(.caption2)
+/// Кольцо остатка дозы с числом внутри и давностью последней записи под ним.
+private struct Ring: View {
+    let dose: Now.Dose?
+    let last: (date: Date, amount: Double)?
+    let tint: Color
+    let format: String
+    let date: Date
+
+    var body: some View {
+        VStack(spacing: 1) {
+            Gauge(value: dose?.left ?? 0, in: 0...max(dose?.of ?? 1, dose?.left ?? 0)) {
+                EmptyView()
+            } currentValueLabel: {
+                Text(dose.map { String(format: format, $0.left) } ?? "—")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+            }
+            .gaugeStyle(.accessoryCircularCapacity)
+            .tint(tint)
+            .scaleEffect(0.72)
+            .frame(width: 34, height: 34)
+
+            Text(last.map { Glucose.short($0.date, at: date) } ?? "—")
+                .font(.system(size: 11, weight: .semibold, design: .rounded).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-        } else {
-            Text("\(title) —")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .fixedSize()
         }
     }
 }
@@ -190,8 +214,7 @@ struct GlucoseComplication: Widget {
     }
 }
 
-/// Цифра со стрелкой и кривая последних трёх часов — главное, что видно на
-/// странице, в одном прямоугольнике.
+/// Кривая последних трёх часов с коридором и прогнозом на весь слот.
 struct ChartComplication: Widget {
     let kind = "ChartComplication"
 
@@ -201,7 +224,7 @@ struct ChartComplication: Widget {
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("График")
-        .description("Сахар и кривая за три часа с прогнозом.")
+        .description("Кривая за три часа с прогнозом.")
         .supportedFamilies([.accessoryRectangular])
     }
 }
@@ -213,19 +236,13 @@ struct ChartComplicationView: View {
         if let now = entry.now, let latest = now.latest {
             let stale = now.isStale(at: entry.date)
 
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text(Glucose.mmol(latest.mgdl))
-                        .font(.system(.headline, design: .rounded).weight(.semibold))
-                        .foregroundStyle(stale ? .gray : Glucose.color(latest.mgdl, now.target))
-                        .widgetAccentable()
-                    Text(stale ? "" : Glucose.arrow(latest.rate))
-                        .font(.caption)
-                    Spacer(minLength: 0)
+            // Цифра живёт в верхнем слоте, здесь весь слот под кривую. Остаётся
+            // только давность, когда данные устарели: иначе старый график не
+            // отличить от свежего.
+            Sparkline(now: now, date: entry.date)
+                .overlay(alignment: .topTrailing) {
                     Age(since: Date(timeIntervalSince1970: latest.t), stale: stale, date: entry.date)
                 }
-                Sparkline(now: now, date: entry.date)
-            }
         } else {
             Text("—")
                 .foregroundStyle(.gray)

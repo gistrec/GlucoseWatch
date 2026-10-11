@@ -141,6 +141,14 @@ enum Glucose {
         return "\(hours / 24) д \(hours % 24) ч"
     }
 
+    /// «45м», «1ч 44м», «2д» — под кольцом места на пять знаков.
+    static func short(_ moment: Date, at date: Date) -> String {
+        let minutes = max(Int(date.timeIntervalSince(moment) / 60), 0)
+        if minutes < 60 { return "\(minutes)м" }
+        let hours = minutes / 60
+        return hours < 24 ? "\(hours)ч \(minutes % 60)м" : "\(hours / 24)д"
+    }
+
     /// Пороги стрелки как на странице (format.js, trendArrow).
     static func arrow(_ rate: Double?) -> String {
         guard let rate else { return "" }
