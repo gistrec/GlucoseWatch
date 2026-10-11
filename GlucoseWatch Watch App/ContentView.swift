@@ -109,8 +109,6 @@ private struct NowPage: View {
                 .font(.footnote)
                 .foregroundStyle(stale || failed ? .orange : .secondary)
 
-            Spacer(minLength: 0)
-
             GlucoseChart(now: now, date: date)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

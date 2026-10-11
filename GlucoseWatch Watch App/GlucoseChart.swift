@@ -93,8 +93,12 @@ struct GlucoseChart: View {
                         .font(.system(size: 9))
                 }
             }
-            .frame(height: 100)
+            // Резиновая высота: на первой странице график забирает всё, что
+            // осталось под цифрой. Жёсткие 100 pt не помещались на 40–41 мм,
+            // а прокрутки у страницы нет — низ графика пропадал.
+            .frame(minHeight: 60, maxHeight: .infinity)
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .contentShape(Rectangle())
         .onTapGesture {
             let index = Self.windows.firstIndex(of: hours) ?? 0
