@@ -88,11 +88,11 @@ struct ComplicationView: View {
                     .font(.system(.title3, design: .rounded).weight(.semibold))
                     .foregroundStyle(color)
                     .widgetLabel {
-                        Text(since, style: .timer)
+                        Text(stale ? Glucose.ago(since, at: entry.date) : "")
                     }
 
             case .accessoryInline:
-                Text("\(value) \(arrow) · ") + Text(since, style: .timer)
+                Text(stale ? "\(value) · \(Glucose.ago(since, at: entry.date))" : "\(value) \(arrow)")
 
             default:
                 Rectangular(now: now, latest: latest, stale: stale, value: value, arrow: arrow, color: color, since: since, date: entry.date)
@@ -124,7 +124,7 @@ private struct Rectangular: View {
                     .layoutPriority(1)
                     .widgetAccentable()
                 Spacer(minLength: 0)
-                Age(since: since)
+                Age(since: since, stale: stale, date: date)
             }
 
             if !stale, let fall = now.fallRisk {
@@ -156,17 +156,23 @@ private struct Rectangular: View {
     }
 }
 
-/// Давность замера тикающим таймером. Ширина задана явно: таймер в
-/// WidgetKit забирает всю свободную ширину строки и выдавливает цифру.
+/// Давность замера — только когда цифра посерела, по записи таймлайна
+/// (системная .relative под час тикает секундами). Пока данные свежие,
+/// тикающий таймер на циферблате лишь отвлекает: свежесть и так видна по
+/// цвету. Ширина задана явно, чтобы строка не выдавливала цифру.
 private struct Age: View {
     let since: Date
+    let stale: Bool
+    let date: Date
 
     var body: some View {
-        Text(since, style: .timer)
-            .font(.caption2.monospacedDigit())
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.trailing)
-            .frame(width: 36, alignment: .trailing)
+        if stale {
+            Text(Glucose.ago(since, at: date))
+                .font(.caption2.monospacedDigit())
+                .foregroundStyle(.orange)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 44, alignment: .trailing)
+        }
     }
 }
 
@@ -216,7 +222,7 @@ struct ChartComplicationView: View {
                     Text(stale ? "" : Glucose.arrow(latest.rate))
                         .font(.caption)
                     Spacer(minLength: 0)
-                    Age(since: Date(timeIntervalSince1970: latest.t))
+                    Age(since: Date(timeIntervalSince1970: latest.t), stale: stale, date: entry.date)
                 }
                 Sparkline(now: now, date: entry.date)
             }
