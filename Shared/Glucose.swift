@@ -50,6 +50,19 @@ struct Now: Codable {
         let day: Points
     }
 
+    /// Сводка от местной полуночи — тот же подсчёт, что у карточек страницы:
+    /// по сырым замерам, с весом по времени. Проценты, покрытие в секундах.
+    struct Today: Codable {
+        let covered: Double
+        let tir: Double
+        let below: Double
+    }
+
+    struct Sensor: Codable {
+        let started: Double?
+        let ends: Double?
+    }
+
     /// Журнал бота: еда в граммах, болюс и базальный в единицах.
     struct Events: Codable {
         let meals: [[Double]]
@@ -66,6 +79,8 @@ struct Now: Codable {
     // остаться без цифры.
     let series: Series?
     let events: Events?
+    let sensor: Sensor?
+    let today: Today?
 }
 
 enum Feed {
@@ -187,6 +202,19 @@ extension Now {
 
         guard let warning, warning <= target.low else { return nil }
         return max(warning, 40)
+    }
+
+    /// Сводка за сегодня, если данных набралось хотя бы на полчаса: сразу
+    /// после полуночи процент от трёх замеров — шум, а не число.
+    var todayStats: Today? {
+        guard let today, today.covered >= 30 * 60 else { return nil }
+        return today
+    }
+
+    /// Сколько осталось сенсору; nil, если срок неизвестен.
+    func sensorLeft(at date: Date) -> TimeInterval? {
+        guard let ends = sensor?.ends else { return nil }
+        return ends - date.timeIntervalSince1970
     }
 
     /// Последняя запись журнала до ``date``: когда и сколько.

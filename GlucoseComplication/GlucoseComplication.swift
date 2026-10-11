@@ -4,6 +4,22 @@ import WidgetKit
 struct Entry: TimelineEntry {
     let date: Date
     let now: Now?
+
+    /// Вес для Smart Stack: система поднимает виджет наверх стопки, когда
+    /// он важнее остальных. Риск гипо и низкий сахар — главное, высокий —
+    /// заметно, ровный день — фон. Старая цифра поводом не считается.
+    var relevance: TimelineEntryRelevance? {
+        guard let now, let latest = now.latest, !now.isStale(at: date) else {
+            return TimelineEntryRelevance(score: 0)
+        }
+        if latest.mgdl < now.target.low || now.fallRisk != nil {
+            return TimelineEntryRelevance(score: 100, duration: 15 * 60)
+        }
+        if latest.mgdl > now.target.high {
+            return TimelineEntryRelevance(score: 50, duration: 15 * 60)
+        }
+        return TimelineEntryRelevance(score: 5)
+    }
 }
 
 struct Provider: TimelineProvider {
@@ -279,7 +295,9 @@ private let sample = Now(
         carbs: .init(left: 11, of: 68, until: Date.now.timeIntervalSince1970 + 3600)
     ),
     series: nil,
-    events: nil
+    events: nil,
+    sensor: nil,
+    today: nil
 )
 
 #Preview(as: .accessoryRectangular) {

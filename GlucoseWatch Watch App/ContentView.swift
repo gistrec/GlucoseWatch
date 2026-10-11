@@ -96,8 +96,29 @@ private struct Reading: View {
                     Row(title: "Углеводы", value: String(format: "%.0f из %.0f г", carbs.left, carbs.of))
                 }
             }
+
+            day
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var day: some View {
+        let today = now.todayStats
+        let sensor = now.sensorLeft(at: date)
+        if today != nil || sensor != nil {
+            Divider()
+            if let today {
+                Row(title: "Сегодня в диапазоне", value: String(format: "%.0f%%", today.tir))
+                if today.below >= 0.5 {
+                    Row(title: "Ниже диапазона", value: String(format: "%.0f%%", today.below))
+                }
+            }
+            if let sensor {
+                Row(title: "Сенсор", value: sensor > 0 ? Glucose.ago(date.addingTimeInterval(-sensor), at: date) : "истёк")
+                    .foregroundStyle(sensor < 24 * 3600 ? .orange : .primary)
+            }
+        }
     }
 
     private func age(_ minutes: Int) -> String {
