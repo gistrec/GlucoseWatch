@@ -2,13 +2,20 @@ import Charts
 import SwiftUI
 
 /// Кривая как на странице: зелёный коридор целевого диапазона, линия в цветах
-/// зон, пунктир прогноза модели, отметки еды и болюсов. Касание меняет окно.
+/// зон, пунктир прогноза модели, отметки еды и болюсов. Касание подписи окна
+/// меняет окно; касание графика включает курсор, который ведёт колёсико.
 struct GlucoseChart: View {
     let now: Now
     let date: Date
 
     static let windows: [Double] = [3, 6, 12, 24]
     @AppStorage("chartHours") private var hours = 3.0
+
+    /// Курсор: индекс точки кривой, его крутит колёсико. Пока курсора нет,
+    /// колёсико листает страницы — график забирает его только по касанию.
+    @State private var scrubbing = false
+    @State private var cursor = 0.0
+    @FocusState private var focused: Bool
 
     /// Дольше этого между соседними точками — пропуск сенсора, линию рвём,
     /// а не тянем прямую через дыру.
@@ -25,10 +32,23 @@ struct GlucoseChart: View {
         let top = max(high + 1, (values.max() ?? high) + 0.5)
         let end = forecast.last?.date ?? date
 
+        let points = segments.flatMap { $0 }
+        let picked = scrubbing && !points.isEmpty ? points[min(max(Int(cursor.rounded()), 0), points.count - 1)] : nil
+
         VStack(alignment: .leading, spacing: 2) {
-            Text("\(Int(hours)) ч")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            if let picked {
+                cursorLabel(picked)
+            } else {
+                Text("\(Int(hours)) ч")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .padding(.trailing, 12)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        let index = Self.windows.firstIndex(of: hours) ?? 0
+                        hours = Self.windows[(index + 1) % Self.windows.count]
+                    }
+            }
 
             Chart {
                 RectangleMark(
@@ -82,6 +102,15 @@ struct GlucoseChart: View {
                         .symbolSize(18)
                         .foregroundStyle(.cyan)
                 }
+
+                if let picked {
+                    RuleMark(x: .value("t", picked.date))
+                        .lineStyle(StrokeStyle(lineWidth: 1))
+                        .foregroundStyle(.white.opacity(0.6))
+                    PointMark(x: .value("t", picked.date), y: .value("mmol", picked.mmol))
+                        .symbolSize(50)
+                        .foregroundStyle(.white)
+                }
             }
             .chartXScale(domain: start...end)
             .chartYScale(domain: bottom...top)
@@ -100,10 +129,65 @@ struct GlucoseChart: View {
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .contentShape(Rectangle())
+        .focusable(scrubbing)
+        .focused($focused)
+        .digitalCrownRotation(
+            $cursor, from: 0, through: Double(max(points.count - 1, 1)), by: 1,
+            sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true
+        )
         .onTapGesture {
-            let index = Self.windows.firstIndex(of: hours) ?? 0
-            hours = Self.windows[(index + 1) % Self.windows.count]
+            scrubbing.toggle()
+            if scrubbing {
+                cursor = Double(max(points.count - 1, 0))
+            }
+            focused = scrubbing
         }
+        // Колёсико ушло к странице (смахнули экран, система сняла фокус) —
+        // курсор гаснет, чтобы не висеть на старой точке.
+        .onChange(of: focused) { _, isFocused in
+            if !isFocused {
+                scrubbing = false
+            }
+        }
+        #if DEBUG
+        // `-scrub 0.6` ставит курсор на долю кривой — для скриншотов.
+        .onAppear {
+            if UserDefaults.standard.object(forKey: "scrub") != nil {
+                scrubbing = true
+                cursor = (UserDefaults.standard.double(forKey: "scrub") * Double(max(points.count - 1, 0))).rounded()
+            }
+        }
+        #endif
+    }
+
+    /// «9.7 · 23:40», а рядом с записью журнала — «· Еда 53 г»: ближайшая
+    /// запись в пределах десяти минут от точки.
+    private func cursorLabel(_ point: Point) -> some View {
+        let t = point.date.timeIntervalSince1970
+        // Граммы целыми, как везде в приложении; единицы — как записаны.
+        let lanes: [(entries: [[Double]], title: String, unit: String, format: String)] = [
+            (now.events?.meals ?? [], "Еда", "г", "%.0f"),
+            (now.events?.bolus ?? [], "Инсулин", "ед", "%g"),
+        ]
+        let near = lanes
+            .flatMap { lane in
+                lane.entries.filter { $0.count == 2 && abs($0[0] - t) <= 600 }
+                    .map { (distance: abs($0[0] - t), text: "\(lane.title) \(String(format: lane.format, $0[1])) \(lane.unit)") }
+            }
+            .min { $0.distance < $1.distance }
+
+        return HStack(spacing: 4) {
+            Text(Glucose.mmol(point.mgdl))
+                .foregroundStyle(Glucose.color(point.mgdl, now.target))
+            Text(point.date, format: .dateTime.hour().minute())
+                .foregroundStyle(.secondary)
+            if let near {
+                Text("· \(near.text)")
+                    .foregroundStyle(.orange)
+            }
+        }
+        .font(.caption2.weight(.semibold).monospacedDigit())
+        .lineLimit(1)
     }
 
     private struct Point: Identifiable {
