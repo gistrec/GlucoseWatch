@@ -280,8 +280,9 @@ private struct NightSummary: View {
         guard let minutes = night.lowMinutes, minutes > 0 else {
             // Покрытие идущей ночи считается по прошедшей части: «не было»
             // про всю ночь можно сказать только про целую.
+            guard night.coverage >= Self.minCoverage else { return "мало данных" }
             if ongoing { return "пока не было" }
-            return !night.partial && night.coverage >= Self.minCoverage ? "не было" : "мало данных"
+            return night.partial ? "мало данных" : "не было"
         }
         return "\(Int(minutes)) мин · \(Glucose.times(Int(night.lowCount ?? 1)))"
     }
