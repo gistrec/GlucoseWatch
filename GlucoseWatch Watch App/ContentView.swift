@@ -247,11 +247,11 @@ private struct NightSummary: View {
                 .foregroundStyle(.secondary)
         }
         if let min = night.min {
-            Row(title: "Минимум", value: Glucose.mmol(min), valueColor: night.hypo == true ? .red : .primary)
+            Row(title: "Минимум", value: Glucose.mmol(min), valueColor: night.hypo == true ? .red : nil)
         }
-        if night.count > 0 {
-            Row(title: "Ниже \(Glucose.mmol(nights.hypoMgdl))", value: below)
-        }
+        // Всегда: у ночи без единого замера это единственная строка, которая
+        // скажет «мало данных».
+        Row(title: "Ниже \(Glucose.mmol(nights.hypoMgdl))", value: below)
         if let drift = night.drift {
             Row(title: "Дрейф 03→06", value: String(format: "%+.1f", drift / Glucose.mgdlPerMmol))
         }
@@ -343,15 +343,20 @@ private struct ReloadSummary: View {
 private struct Row: View {
     let title: String
     let value: String
-    var valueColor: Color = .primary
+    /// Цвет одного значения; без него строка наследует цвет от родителя
+    /// (так срок сенсора красит строку оранжевым).
+    var valueColor: Color?
 
     var body: some View {
         HStack {
             Text(title)
                 .foregroundStyle(.secondary)
             Spacer()
-            Text(value)
-                .foregroundStyle(valueColor)
+            if let valueColor {
+                Text(value).foregroundStyle(valueColor)
+            } else {
+                Text(value)
+            }
         }
         .font(.footnote)
     }
