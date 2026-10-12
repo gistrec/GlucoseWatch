@@ -265,15 +265,23 @@ private struct NightSummary: View {
     /// Флаг неполноты сам по себе не значит «идёт»: в старом снимке он
     /// остаётся и у закончившейся ночи.
     private var status: String {
-        if night.end > date.timeIntervalSince1970 { return "идёт" }
+        if ongoing { return "идёт" }
         return night.partial ? "\(day) · неполная" : day
     }
 
-    /// «39 мин · 2 раза»; «не было» — только если ночь накрыта замерами,
-    /// иначе отсутствие провала ничего не доказывает.
+    private var ongoing: Bool {
+        guard let end = nights.plannedEnd(of: night) else { return false }
+        return night.partial && date < end
+    }
+
+    /// «39 мин · 2 раза»; «не было» — только про целую ночь, накрытую
+    /// замерами, иначе отсутствие провала ничего не доказывает.
     private var below: String {
         guard let minutes = night.lowMinutes, minutes > 0 else {
-            return night.coverage >= Self.minCoverage ? "не было" : "мало данных"
+            // Покрытие идущей ночи считается по прошедшей части: «не было»
+            // про всю ночь можно сказать только про целую.
+            if ongoing { return "пока не было" }
+            return !night.partial && night.coverage >= Self.minCoverage ? "не было" : "мало данных"
         }
         return "\(Int(minutes)) мин · \(Glucose.times(Int(night.lowCount ?? 1)))"
     }

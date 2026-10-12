@@ -67,10 +67,23 @@ struct Now: Codable {
             let drift: Double?
         }
 
+        let tz: String
+        /// Час конца ночи по местным часам (06).
+        let to: Int
         let counted: Double
         let hypoNights: Double
         let hypoMgdl: Double
         let nights: [Night]
+
+        /// Плановый конец ночи — 06:00 её даты по поясу ночей. Не ``end`` из
+        /// записи: у идущей ночи сервер обрезает его временем снимка.
+        func plannedEnd(of night: Night) -> Date? {
+            let parts = night.date.split(separator: "-").compactMap { Int($0) }
+            guard parts.count == 3, let zone = TimeZone(identifier: tz) else { return nil }
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = zone
+            return calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2], hour: to))
+        }
     }
 
     /// «Обычный день» за две недели: на каждый слот времени суток квартиль
