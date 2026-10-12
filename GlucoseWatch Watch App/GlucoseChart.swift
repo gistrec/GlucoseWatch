@@ -236,14 +236,20 @@ struct GlucoseChart: View {
         return segments
     }
 
-    /// Вчерашняя кривая за то же окно, сдвинутая на сутки вперёд, и разрезанная
-    /// по пропускам. Шаг двухсуточной серии — 10 минут, поэтому порог разрыва
-    /// шире, чем у сегодняшней.
+    /// Вчерашняя кривая за то же окно, сдвинутая на календарные сутки вперёд
+    /// по поясу часов, и разрезанная по пропускам. Сутки календарные, а не
+    /// 86 400 секунд: в день перевода часов они длятся 23 или 25 часов, и
+    /// ровный сдвиг уводил бы линию на час. Шаг двухсуточной серии — 10
+    /// минут, поэтому порог разрыва шире, чем у сегодняшней.
     private func yesterday(from start: Date, to end: Date) -> [[Point]] {
-        let day: TimeInterval = 24 * 3600
+        let calendar = Calendar.current
         let points = (now.series?.twoDays?.points ?? [])
-            .filter { $0.count == 2 && $0[0] + day >= start.timeIntervalSince1970 && $0[0] + day <= end.timeIntervalSince1970 }
-            .map { Point($0[0] + day, $0[1]) }
+            .filter { $0.count == 2 }
+            .compactMap { raw -> Point? in
+                guard let shifted = calendar.date(byAdding: .day, value: 1, to: Date(timeIntervalSince1970: raw[0])),
+                      shifted >= start, shifted <= end else { return nil }
+                return Point(shifted.timeIntervalSince1970, raw[1])
+            }
 
         var pieces: [[Point]] = []
         for point in points {
