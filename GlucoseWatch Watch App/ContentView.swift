@@ -206,10 +206,15 @@ private struct DayPage: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+                if let nights = now.nights, let night = nights.nights.last {
+                    NightSummary(nights: nights, night: night, date: date)
+                    Divider()
+                }
                 if let sensor {
                     Row(title: "Сенсор", value: sensor > 0 ? Glucose.ago(date.addingTimeInterval(-sensor), at: date) : "истёк")
                         .foregroundStyle(sensor < 24 * 3600 ? .orange : .primary)
                 }
+
 
                 ReloadSummary(date: date)
             }
@@ -218,6 +223,74 @@ private struct DayPage: View {
             // ложатся поверх цифр в правой колонке.
             .padding(.trailing, 8)
         }
+    }
+}
+
+/// Последняя ночь, 00:00–06:00 по местным часам, и итог недели — то, что
+/// утром хочется знать первым.
+private struct NightSummary: View {
+    let nights: Now.Nights
+    let night: Now.Nights.Night
+    let date: Date
+
+    /// Порог покрытия, с которого сервер засчитывает ночь (NIGHT_MIN_COVERAGE).
+    private static let minCoverage = 50.0
+
+    var body: some View {
+        Divider()
+        HStack {
+            Text("Ночь")
+                .font(.footnote.weight(.semibold))
+            Spacer()
+            Text(status)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        if let min = night.min {
+            Row(title: "Минимум", value: Glucose.mmol(min), valueColor: night.hypo == true ? .red : nil)
+        }
+        // Всегда: у ночи без единого замера это единственная строка, которая
+        // скажет «мало данных».
+        Row(title: "Ниже \(Glucose.mmol(nights.hypoMgdl))", value: below)
+        if let drift = night.drift {
+            Row(title: "Дрейф 03→06", value: String(format: "%+.1f", drift / Glucose.mgdlPerMmol))
+        }
+        if nights.counted > 0 {
+            Row(title: "Ночей с гипо", value: String(format: "%.0f из %.0f", nights.hypoNights, nights.counted))
+        }
+    }
+
+    /// «идёт», пока конец ночи впереди; «12.10 · неполная», если ночь
+    /// обрезана (окном, пропуском или сменой пояса); иначе просто дата.
+    /// Флаг неполноты сам по себе не значит «идёт»: в старом снимке он
+    /// остаётся и у закончившейся ночи.
+    private var status: String {
+        if ongoing { return "идёт" }
+        return night.partial ? "\(day) · неполная" : day
+    }
+
+    private var ongoing: Bool {
+        guard let end = nights.plannedEnd(of: night) else { return false }
+        return night.partial && date < end
+    }
+
+    /// «39 мин · 2 раза»; «не было» — только про целую ночь, накрытую
+    /// замерами, иначе отсутствие провала ничего не доказывает.
+    private var below: String {
+        guard let minutes = night.lowMinutes, minutes > 0 else {
+            // Покрытие идущей ночи считается по прошедшей части: «не было»
+            // про всю ночь можно сказать только про целую.
+            guard night.coverage >= Self.minCoverage else { return "мало данных" }
+            if ongoing { return "пока не было" }
+            return night.partial ? "мало данных" : "не было"
+        }
+        return "\(Int(minutes)) мин · \(Glucose.times(Int(night.lowCount ?? 1)))"
+    }
+
+    /// «12.10» из «2026-10-12».
+    private var day: String {
+        let parts = night.date.split(separator: "-")
+        return parts.count == 3 ? "\(parts[2]).\(parts[1])" : night.date
     }
 }
 
@@ -271,13 +344,20 @@ private struct ReloadSummary: View {
 private struct Row: View {
     let title: String
     let value: String
+    /// Цвет одного значения; без него строка наследует цвет от родителя
+    /// (так срок сенсора красит строку оранжевым).
+    var valueColor: Color?
 
     var body: some View {
         HStack {
             Text(title)
                 .foregroundStyle(.secondary)
             Spacer()
-            Text(value)
+            if let valueColor {
+                Text(value).foregroundStyle(valueColor)
+            } else {
+                Text(value)
+            }
         }
         .font(.footnote)
     }
