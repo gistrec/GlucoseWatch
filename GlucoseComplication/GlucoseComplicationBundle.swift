@@ -13,6 +13,7 @@ struct GlucoseComplicationBundle: WidgetBundle {
     var body: some Widget {
         GlucoseComplication()
         ChartComplication()
+        ChartUsualComplication()
         InsulinComplication()
         CarbsComplication()
     }
