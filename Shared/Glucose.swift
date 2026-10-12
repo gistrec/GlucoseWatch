@@ -105,8 +105,20 @@ struct Now: Codable {
     }
 
     struct Sensor: Codable {
+        /// Расхождение текущего сенсора с глюкометром по сверкам из бота:
+        /// медиана «сенсор − глюкометр» в мг/дл, сколько пар и сколько из них
+        /// согласны, и в каком диапазоне по глюкометру это проверено.
+        struct Bias: Codable {
+            let mgdl: Double
+            let pairs: Double
+            let agree: Double
+            let from: Double
+            let to: Double
+        }
+
         let started: Double?
         let ends: Double?
+        let bias: Bias?
     }
 
     /// Журнал бота: еда в граммах, болюс и базальный в единицах.
@@ -132,7 +144,16 @@ struct Now: Codable {
 }
 
 enum Feed {
-    static let url = URL(string: "https://glucose.gistrec.cloud/now.json")!
+    static var url: URL {
+        #if DEBUG
+        // `-feed URL` подменяет источник — например, файлом с нужным сахаром
+        // для скриншота, не дожидаясь, пока он случится на самом деле.
+        if let override = UserDefaults.standard.string(forKey: "feed"), let url = URL(string: override) {
+            return url
+        }
+        #endif
+        return URL(string: "https://glucose.gistrec.cloud/now.json")!
+    }
     private static let cacheKey = "now.json"
 
     private static var decoder: JSONDecoder {
@@ -302,6 +323,15 @@ extension Now {
     var todayStats: Today? {
         guard let today, today.covered >= 30 * 60 else { return nil }
         return today
+    }
+
+    /// Оценка по крови для значения сенсора: сенсор минус его смещение от
+    /// глюкометра. Только в диапазоне, где смещение проверено сверками, —
+    /// дальше это была бы экстраполяция; nil, если смещения нет.
+    func bloodEstimate(_ mgdl: Double) -> Double? {
+        guard let bias = sensor?.bias else { return nil }
+        let blood = mgdl - bias.mgdl
+        return blood >= bias.from && blood <= bias.to ? blood : nil
     }
 
     /// Сколько осталось сенсору; nil, если срок неизвестен.
