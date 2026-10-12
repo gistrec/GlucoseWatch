@@ -329,7 +329,10 @@ private func todayMinutes(_ list: [Now.Episode], since midnight: Date) -> [Doubl
 /// данных», отсутствие эпизодов тогда ничего не говорит.
 private func episodes(_ minutes: [Double], covered: Bool) -> String {
     guard !minutes.isEmpty else { return covered ? "пока не было" : "мало данных" }
-    return "\(Glucose.times(minutes.count)) · \(Int(minutes.reduce(0, +))) мин"
+    // Хвост через секунды после полуночи — доля минуты; «0 мин» рядом с
+    // «1 раз» читалось бы как ошибка, поэтому не меньше минуты.
+    let total = max(1, Int(minutes.reduce(0, +).rounded()))
+    return "\(Glucose.times(minutes.count)) · \(total) мин"
 }
 
 /// Последняя ночь, 00:00–06:00 по местным часам, и итог недели — то, что
