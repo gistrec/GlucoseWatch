@@ -124,6 +124,17 @@ private struct NowPage: View {
                 .font(.footnote)
                 .foregroundStyle(stale || failed ? .orange : .secondary)
 
+            // Сенсор расходится с глюкометром, и в проверенном сверками
+            // диапазоне это расхождение известно: показываем, сколько было бы
+            // по крови. Оценка, а не замер — так и подписана; «22/24» — сколько
+            // сверок из всех согласны со смещением.
+            if !stale, let blood = now.bloodEstimate(latest.mgdl), let bias = now.sensor?.bias {
+                Text("≈ \(Glucose.mmol(blood)) по крови · \(Int(bias.agree))/\(Int(bias.pairs))")
+                    .lineLimit(1)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
             GlucoseChart(now: now, date: date)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
