@@ -379,6 +379,16 @@ extension Now {
         return blood >= bias.from && blood <= bias.to ? blood : nil
     }
 
+    /// Местная полночь суток ``date`` — по поясу снимка (из бота), тому же,
+    /// по которому сервер считает «сегодня»; пояс часов — только запасной.
+    func localMidnight(of date: Date) -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        if let name = nights?.tz ?? profile?.tz, let zone = TimeZone(identifier: name) {
+            calendar.timeZone = zone
+        }
+        return calendar.startOfDay(for: date)
+    }
+
     /// Сколько осталось сенсору; nil, если срок неизвестен.
     func sensorLeft(at date: Date) -> TimeInterval? {
         guard let ends = sensor?.ends else { return nil }

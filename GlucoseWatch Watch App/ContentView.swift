@@ -224,11 +224,11 @@ private struct DayPage: View {
                 // Эпизоды с полуночи — сколько раз и сколько минут сахар был за
                 // пределами диапазона. Старый сервер их не присылал — тогда строк нет.
                 if let lows = now.lows {
-                    Row(title: "Ниже \(Glucose.mmol(now.target.low))", value: episodes(lows, covered: today != nil),
+                    Row(title: "Ниже \(Glucose.mmol(now.target.low))", value: episodes(lows, covered: today != nil, since: now.localMidnight(of: date)),
                         valueColor: lows.isEmpty ? nil : .red)
                 }
                 if let highs = now.highs {
-                    Row(title: "Выше \(Glucose.mmol(now.target.high))", value: episodes(highs, covered: today != nil),
+                    Row(title: "Выше \(Glucose.mmol(now.target.high))", value: episodes(highs, covered: today != nil, since: now.localMidnight(of: date)),
                         valueColor: highs.isEmpty ? nil : .orange)
                 }
                 if let nights = now.nights, let night = nights.nights.last {
@@ -313,9 +313,14 @@ private struct LastMeal: View {
 /// «7 раз · 105 мин». Без эпизодов — «пока не было»: сутки ещё идут; а
 /// если с полуночи данных меньше получаса (``covered`` ложно) — «мало
 /// данных», отсутствие эпизодов тогда ничего не говорит.
-private func episodes(_ list: [Now.Episode], covered: Bool) -> String {
+/// Эпизод, начатый до полуночи, считается только своей сегодняшней частью:
+/// вчерашние минуты на странице «сегодня» были бы чужими.
+private func episodes(_ list: [Now.Episode], covered: Bool, since midnight: Date) -> String {
     guard !list.isEmpty else { return covered ? "пока не было" : "мало данных" }
-    let minutes = list.reduce(0) { $0 + $1.minutes }
+    let start = midnight.timeIntervalSince1970
+    let minutes = list.reduce(0.0) { total, item in
+        total + (item.start >= start ? item.minutes : max(0, item.end - start) / 60)
+    }
     return "\(Glucose.times(list.count)) · \(Int(minutes)) мин"
 }
 
