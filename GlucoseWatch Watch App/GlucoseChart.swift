@@ -2,7 +2,8 @@ import Charts
 import SwiftUI
 
 /// Кривая как на странице: зелёный коридор целевого диапазона, линия в цветах
-/// зон, пунктир прогноза модели, отметки еды и болюсов. Касание подписи окна
+/// зон, пунктир прогноза модели, отметки еды и болюсов, а под ней «обычный
+/// день» за две недели. Касание подписи окна
 /// меняет окно; касание графика включает курсор, который ведёт колёсико.
 struct GlucoseChart: View {
     let now: Now
@@ -26,8 +27,8 @@ struct GlucoseChart: View {
         let segments = segments(from: start)
         let forecast = forecastLine
         let end = forecast.last?.date ?? date
-        let yesterday = yesterday(from: start, to: end)
-        let values = segments.flatMap { $0.map(\.mmol) } + forecast.map(\.mmol) + yesterday.flatMap { $0.map(\.mmol) }
+        let usual = usualDay(from: start, to: end)
+        let values = segments.flatMap { $0.map(\.mmol) } + forecast.map(\.mmol) + usual.flatMap { [$0.low, $0.high] }
         let low = now.target.low / Glucose.mgdlPerMmol
         let high = now.target.high / Glucose.mgdlPerMmol
         let bottom = min(low - 1, (values.min() ?? low) - 0.5)
@@ -60,16 +61,17 @@ struct GlucoseChart: View {
                 )
                 .foregroundStyle(.green.opacity(0.15))
 
-                // Вчера в те же часы — тонкая серая линия под сегодняшней:
-                // видно, повторяется ли картина. Без цвета зон, чтобы не
-                // спорить с сегодняшней кривой.
-                ForEach(Array(yesterday.enumerated()), id: \.offset) { index, segment in
-                    ForEach(segment) { point in
-                        LineMark(x: .value("t", point.date), y: .value("mmol", point.mmol), series: .value("s", "y\(index)"))
-                            .interpolationMethod(.monotone)
-                            .lineStyle(StrokeStyle(lineWidth: 1.2, lineCap: .round))
-                            .foregroundStyle(.gray.opacity(0.55))
-                    }
+                // «Обычный день» под сегодняшней кривой: бледный коридор, где
+                // сахар бывает в это время в половине дней, и тонкая медиана.
+                // Видно, обычный ли сейчас подъём или сегодняшняя случайность.
+                ForEach(usual) { slot in
+                    AreaMark(x: .value("t", slot.date), yStart: .value("mmol", slot.low), yEnd: .value("mmol", slot.high), series: .value("s", "usual\(slot.run)"))
+                        .interpolationMethod(.monotone)
+                        .foregroundStyle(.gray.opacity(0.22))
+                    LineMark(x: .value("t", slot.date), y: .value("mmol", slot.median), series: .value("s", "median\(slot.run)"))
+                        .interpolationMethod(.monotone)
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 2]))
+                        .foregroundStyle(.gray.opacity(0.7))
                 }
 
                 ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
@@ -236,43 +238,61 @@ struct GlucoseChart: View {
         return segments
     }
 
-    /// Вчерашняя кривая за то же окно, сдвинутая на календарные сутки вперёд
-    /// по поясу часов, и разрезанная по пропускам. Сутки календарные, а не
-    /// 86 400 секунд: в день перевода часов они длятся 23 или 25 часов, и
-    /// ровный сдвиг уводил бы линию на час. Шаг двухсуточной серии — 10
-    /// минут, поэтому порог разрыва шире, чем у сегодняшней.
-    private func yesterday(from start: Date, to end: Date) -> [[Point]] {
-        let calendar = Calendar.current
-        let points = (now.series?.twoDays?.points ?? [])
-            .filter { $0.count == 2 }
-            .compactMap { raw -> Point? in
-                let source = Date(timeIntervalSince1970: raw[0])
-                guard let shifted = calendar.date(byAdding: .day, value: 1, to: source),
-                      shifted >= start, shifted <= end,
-                      // Весной вчерашних 02:xx сегодня нет, и календарь
-                      // переносит их на 03:xx, где лежат настоящие вчерашние
-                      // 03:xx. Точка, у которой сдвиг поменял время на
-                      // циферблате, — из несуществующего часа: её не рисуем.
-                      calendar.dateComponents([.hour, .minute], from: source)
-                        == calendar.dateComponents([.hour, .minute], from: shifted)
-                else { return nil }
-                return Point(shifted.timeIntervalSince1970, raw[1])
-            }
+    private struct UsualSlot: Identifiable {
+        let date: Date
+        let low: Double
+        let median: Double
+        let high: Double
+        /// Номер непрерывного куска: через пустой слот Charts тянули бы
+        /// коридор, которого нет, поэтому каждый кусок — своя серия.
+        let run: Int
+        var id: Date { date }
+    }
 
-        var pieces: [[Point]] = []
-        for point in points {
-            // Страховка: точки, которые не идут строго вперёд, дали бы Charts
-            // повторяющиеся идентификаторы.
-            if let last = pieces.last?.last, point.date <= last.date {
-                continue
+    /// Профиль «обычного дня», разложенный на окно графика: каждый слот
+    /// времени суток ставится на дату окна (оно может заходить во вчера) по
+    /// поясу профиля, в середину слота. Время берётся по циферблату, а не
+    /// минутами от полуночи: в день перевода часов отсчёт минутами сдвигал
+    /// бы слоты на час. Слот, которого в этот день нет, и пустой слот
+    /// пропускаются и рвут полосу.
+    private func usualDay(from start: Date, to end: Date) -> [UsualSlot] {
+        guard let profile = now.profile, profile.slotMin > 0, !profile.slots.isEmpty,
+              let zone = TimeZone(identifier: profile.tz) else { return [] }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = zone
+        let half = TimeInterval(profile.slotMin * 30)
+
+        var result: [UsualSlot] = []
+        var run = 0
+        var day = calendar.startOfDay(for: start)
+        while day <= end {
+            for (index, slot) in profile.slots.enumerated() {
+                let minutes = index * profile.slotMin
+                guard let slot, slot.count >= 3,
+                      let slotStart = calendar.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: day),
+                      calendar.component(.hour, from: slotStart) == minutes / 60,
+                      calendar.component(.minute, from: slotStart) == minutes % 60
+                else {
+                    run += 1
+                    continue
+                }
+                let middle = slotStart.addingTimeInterval(half)
+                guard middle >= start, middle <= end else { continue }
+                // Страховка от повтора времени на осеннем переводе: Charts
+                // нужны уникальные и возрастающие x.
+                if let last = result.last, middle <= last.date { continue }
+                result.append(UsualSlot(
+                    date: middle,
+                    low: slot[0] / Glucose.mgdlPerMmol,
+                    median: slot[1] / Glucose.mgdlPerMmol,
+                    high: slot[2] / Glucose.mgdlPerMmol,
+                    run: run
+                ))
             }
-            if let last = pieces.last?.last, point.date.timeIntervalSince(last.date) <= 25 * 60 {
-                pieces[pieces.count - 1].append(point)
-            } else {
-                pieces.append([point])
-            }
+            guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
+            day = next
         }
-        return pieces
+        return result
     }
 
     /// От последнего замера через точки модели — та же ломаная, что на

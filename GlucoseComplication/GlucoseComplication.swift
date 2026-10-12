@@ -355,7 +355,8 @@ private let sample = Now(
     series: nil,
     events: nil,
     sensor: nil,
-    today: nil
+    today: nil,
+    profile: nil
 )
 
 #Preview(as: .accessoryRectangular) {

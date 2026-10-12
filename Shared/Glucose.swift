@@ -48,9 +48,16 @@ struct Now: Codable {
 
     struct Series: Codable {
         let day: Points
-        /// Двое суток с шагом 10 минут — для вчерашней кривой. Старый сервер
-        /// её не присылал, отсюда опциональность.
-        let twoDays: Points?
+    }
+
+    /// «Обычный день» за две недели: на каждый слот времени суток квартиль
+    /// 25 %, медиана, квартиль 75 % (мг/дл) и число дней. Слоты — по поясу
+    /// ``tz``; слот без данных приходит как null.
+    struct Profile: Codable {
+        let tz: String
+        let slotMin: Int
+        let days: Int
+        let slots: [[Double]?]
     }
 
     /// Сводка от местной полуночи — тот же подсчёт, что у карточек страницы:
@@ -84,6 +91,7 @@ struct Now: Codable {
     let events: Events?
     let sensor: Sensor?
     let today: Today?
+    let profile: Profile?
 }
 
 enum Feed {
