@@ -86,6 +86,37 @@ struct Now: Codable {
         }
     }
 
+    /// Разбор приёмов пищи сервером: окно 4 часа от еды. Мг/дл и минуты.
+    struct Analysis: Codable {
+        struct Targets: Codable {
+            /// Ориентир подъёма, мг/дл.
+            let rise: Double
+        }
+
+        struct MealDose: Codable {
+            let units: Double
+        }
+
+        struct Meal: Codable {
+            let t: Double
+            let carbs: Double
+            let dose: MealDose?
+            let peakMin: Double
+            /// От исходного до пика.
+            let rise: Double
+            /// Через 4 часа относительно исходного; nil, пока окно не закрылось.
+            let ret: Double?
+            /// Провал ниже порога после пика.
+            let hypo: Bool
+            /// Окно прервала следующая еда.
+            let cut: Bool
+            let complete: Bool
+        }
+
+        let targets: Targets
+        let meals: [Meal]
+    }
+
     /// «Обычный день» за две недели: на каждый слот времени суток квартиль
     /// 25 %, медиана, квартиль 75 % (мг/дл) и число дней. Слоты — по поясу
     /// ``tz``; слот без данных приходит как null.
@@ -141,6 +172,7 @@ struct Now: Codable {
     let today: Today?
     let profile: Profile?
     let nights: Nights?
+    let analysis: Analysis?
 }
 
 enum Feed {

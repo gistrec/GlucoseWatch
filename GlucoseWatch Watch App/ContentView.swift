@@ -185,6 +185,10 @@ private struct ForecastPage: View {
                 Divider()
                 Row(title: "Инсулин", value: insulin.map { String(format: "%.1f из %.0f ед", $0.left, $0.of) } ?? "не действует")
                 Row(title: "Углеводы", value: carbs.map { String(format: "%.0f из %.0f г", $0.left, $0.of) } ?? "не действуют")
+
+                if let analysis = now.analysis, let meal = analysis.meals.last {
+                    LastMeal(meal: meal, targets: analysis.targets, date: date)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             // Справа полоса прокрутки и точки страниц — без отступа они
@@ -234,6 +238,55 @@ private struct DayPage: View {
             // ложатся поверх цифр в правой колонке.
             .padding(.trailing, 8)
         }
+    }
+}
+
+/// Как отработала последняя еда — разбор сервера за 4 часа от неё: подъём
+/// до пика и где сахар к концу окна. Подъём выше ориентира — оранжевым,
+/// провал после пика — красной строкой.
+private struct LastMeal: View {
+    let meal: Now.Analysis.Meal
+    let targets: Now.Analysis.Targets
+    let date: Date
+
+    var body: some View {
+        Divider()
+        HStack {
+            Text(title)
+                .font(.footnote.weight(.semibold))
+                .lineLimit(1)
+            Spacer()
+            Text(Glucose.short(Date(timeIntervalSince1970: meal.t), at: date))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        Row(title: "Подъём", value: rise, valueColor: meal.rise > targets.rise ? .orange : nil)
+        Row(title: "Через 4 ч", value: outcome)
+        if meal.hypo {
+            Text("Ниже диапазона после пика")
+                .font(.footnote)
+                .foregroundStyle(.red)
+        }
+    }
+
+    /// «Еда 53 г · 3 ед».
+    private var title: String {
+        let dose = meal.dose.map { String(format: " · %g ед", $0.units) } ?? ""
+        return String(format: "Еда %.0f г", meal.carbs) + dose
+    }
+
+    /// «+2.8 за 55 мин» или «нет», если сахар после еды не поднимался.
+    private var rise: String {
+        guard meal.rise > 0 else { return "нет" }
+        return String(format: "+%.1f за %.0f мин", meal.rise / Glucose.mgdlPerMmol, meal.peakMin)
+    }
+
+    /// Где сахар к концу окна относительно исходного; пока окно открыто или
+    /// его прервала следующая еда, итога нет.
+    private var outcome: String {
+        if meal.cut { return "прервано едой" }
+        guard meal.complete, let ret = meal.ret else { return "разбор идёт" }
+        return String(format: "%+.1f", ret / Glucose.mgdlPerMmol)
     }
 }
 
