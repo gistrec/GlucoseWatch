@@ -144,6 +144,15 @@ struct Now: Codable {
         let covered: Double
         let tir: Double
         let below: Double
+        /// Среднее, мг/дл, и коэффициент вариации, %; старый сервер их не слал.
+        let avg: Double?
+        let cv: Double?
+    }
+
+    /// Расчётный HbA1c (GMI) за своё окно — две недели — и покрытие, %.
+    struct Gmi: Codable {
+        let value: Double
+        let days: Double
     }
 
     struct Sensor: Codable {
@@ -186,6 +195,7 @@ struct Now: Codable {
     let analysis: Analysis?
     let lows: [Episode]?
     let highs: [Episode]?
+    let gmi: Gmi?
 }
 
 enum Feed {

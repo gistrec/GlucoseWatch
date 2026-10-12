@@ -378,7 +378,8 @@ private let sample = Now(
     nights: nil,
     analysis: nil,
     lows: nil,
-    highs: nil
+    highs: nil,
+    gmi: nil
 )
 
 #Preview(as: .accessoryRectangular) {
