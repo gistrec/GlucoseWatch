@@ -25,12 +25,13 @@ struct GlucoseChart: View {
         let start = date.addingTimeInterval(-hours * 3600)
         let segments = segments(from: start)
         let forecast = forecastLine
-        let values = segments.flatMap { $0.map(\.mmol) } + forecast.map(\.mmol)
+        let end = forecast.last?.date ?? date
+        let yesterday = yesterday(from: start, to: end)
+        let values = segments.flatMap { $0.map(\.mmol) } + forecast.map(\.mmol) + yesterday.flatMap { $0.map(\.mmol) }
         let low = now.target.low / Glucose.mgdlPerMmol
         let high = now.target.high / Glucose.mgdlPerMmol
         let bottom = min(low - 1, (values.min() ?? low) - 0.5)
         let top = max(high + 1, (values.max() ?? high) + 0.5)
-        let end = forecast.last?.date ?? date
 
         let points = segments.flatMap { $0 }
         let picked = scrubbing && !points.isEmpty ? points[min(max(Int(cursor.rounded()), 0), points.count - 1)] : nil
@@ -58,6 +59,18 @@ struct GlucoseChart: View {
                     yEnd: .value("mmol", high)
                 )
                 .foregroundStyle(.green.opacity(0.15))
+
+                // Вчера в те же часы — тонкая серая линия под сегодняшней:
+                // видно, повторяется ли картина. Без цвета зон, чтобы не
+                // спорить с сегодняшней кривой.
+                ForEach(Array(yesterday.enumerated()), id: \.offset) { index, segment in
+                    ForEach(segment) { point in
+                        LineMark(x: .value("t", point.date), y: .value("mmol", point.mmol), series: .value("s", "y\(index)"))
+                            .interpolationMethod(.monotone)
+                            .lineStyle(StrokeStyle(lineWidth: 1.2, lineCap: .round))
+                            .foregroundStyle(.gray.opacity(0.55))
+                    }
+                }
 
                 ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
                     ForEach(segment) { point in
@@ -221,6 +234,26 @@ struct GlucoseChart: View {
             }
         }
         return segments
+    }
+
+    /// Вчерашняя кривая за то же окно, сдвинутая на сутки вперёд, и разрезанная
+    /// по пропускам. Шаг двухсуточной серии — 10 минут, поэтому порог разрыва
+    /// шире, чем у сегодняшней.
+    private func yesterday(from start: Date, to end: Date) -> [[Point]] {
+        let day: TimeInterval = 24 * 3600
+        let points = (now.series?.twoDays?.points ?? [])
+            .filter { $0.count == 2 && $0[0] + day >= start.timeIntervalSince1970 && $0[0] + day <= end.timeIntervalSince1970 }
+            .map { Point($0[0] + day, $0[1]) }
+
+        var pieces: [[Point]] = []
+        for point in points {
+            if let last = pieces.last?.last, point.date.timeIntervalSince(last.date) <= 25 * 60 {
+                pieces[pieces.count - 1].append(point)
+            } else {
+                pieces.append([point])
+            }
+        }
+        return pieces
     }
 
     /// От последнего замера через точки модели — та же ломаная, что на
