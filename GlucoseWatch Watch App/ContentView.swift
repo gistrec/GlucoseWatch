@@ -203,6 +203,9 @@ private struct DayPage: View {
     let now: Now
     let date: Date
 
+    /// Верх нормы коэффициента вариации, %.
+    private static let cvLimit = 36.0
+
     var body: some View {
         let today = now.todayStats
         let sensor = now.sensorLeft(at: date)
@@ -216,6 +219,14 @@ private struct DayPage: View {
                     if today.below >= 0.5 {
                         Row(title: "Ниже диапазона", value: String(format: "%.0f%%", today.below))
                     }
+                    if let avg = today.avg {
+                        Row(title: "Среднее", value: Glucose.mmol(avg))
+                    }
+                    if let cv = today.cv {
+                        // Норма вариабельности — до 36 %, как на странице.
+                        Row(title: "Вариабельность", value: String(format: "%.0f%%", cv),
+                            valueColor: cv > Self.cvLimit ? .orange : nil)
+                    }
                 } else {
                     Text("День только начался")
                         .font(.footnote)
@@ -223,6 +234,10 @@ private struct DayPage: View {
                 }
                 // Эпизоды с полуночи — сколько раз и сколько минут сахар был за
                 // пределами диапазона. Старый сервер их не присылал — тогда строк нет.
+                // GMI — по двум неделям, а не за сегодня: окно подписано.
+                if let gmi = now.gmi {
+                    Row(title: String(format: "GMI · %.0f дн", gmi.days), value: String(format: "%.1f%%", gmi.value))
+                }
                 let midnight = now.localMidnight(of: Date(timeIntervalSince1970: now.generatedAt))
                 if let lows = now.lows {
                     let minutes = todayMinutes(lows, since: midnight)
