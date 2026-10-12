@@ -50,6 +50,26 @@ struct Now: Codable {
         let day: Points
     }
 
+    /// Ночи с 00:00 до 06:00 по местным часам: сводка за неделю и последняя
+    /// ночь. Мг/дл и минуты; поля ночи без показаний отсутствуют.
+    struct Nights: Codable {
+        struct Night: Codable {
+            let date: String
+            let count: Double
+            let partial: Bool
+            let min: Double?
+            let hypo: Bool?
+            let lowMinutes: Double?
+            let lowCount: Double?
+            let drift: Double?
+        }
+
+        let counted: Double
+        let hypoNights: Double
+        let hypoMgdl: Double
+        let nights: [Night]
+    }
+
     /// «Обычный день» за две недели: на каждый слот времени суток квартиль
     /// 25 %, медиана, квартиль 75 % (мг/дл) и число дней. Слоты — по поясу
     /// ``tz``; слот без данных приходит как null.
@@ -92,6 +112,7 @@ struct Now: Codable {
     let sensor: Sensor?
     let today: Today?
     let profile: Profile?
+    let nights: Nights?
 }
 
 enum Feed {
@@ -161,6 +182,14 @@ enum Glucose {
         let hours = minutes / 60
         if hours < 10 { return "\(hours)ч \(minutes % 60)м" }
         return hours < 24 ? "\(hours)ч" : "\(hours / 24)д"
+    }
+
+    /// «1 раз», «3 раза», «5 раз», «12 раз».
+    static func times(_ count: Int) -> String {
+        let tail = count % 100
+        let last = count % 10
+        let word = (11...14).contains(tail) || !(2...4).contains(last) ? "раз" : "раза"
+        return "\(count) \(word)"
     }
 
     /// Пороги стрелки как на странице (format.js, trendArrow).

@@ -211,6 +211,10 @@ private struct DayPage: View {
                         .foregroundStyle(sensor < 24 * 3600 ? .orange : .primary)
                 }
 
+                if let nights = now.nights, let night = nights.nights.last {
+                    NightSummary(nights: nights, night: night)
+                }
+
                 ReloadSummary(date: date)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -218,6 +222,50 @@ private struct DayPage: View {
             // ложатся поверх цифр в правой колонке.
             .padding(.trailing, 8)
         }
+    }
+}
+
+/// Последняя ночь, 00:00–06:00 по местным часам, и итог недели — то, что
+/// утром хочется знать первым.
+private struct NightSummary: View {
+    let nights: Now.Nights
+    let night: Now.Nights.Night
+
+    var body: some View {
+        Divider()
+        HStack {
+            Text("Ночь")
+                .font(.footnote.weight(.semibold))
+            Spacer()
+            Text(night.partial ? "идёт" : day)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        if let min = night.min {
+            Row(title: "Минимум", value: Glucose.mmol(min))
+                .foregroundStyle(night.hypo == true ? .red : .primary)
+        }
+        if night.count > 0 {
+            Row(title: "Ниже \(Glucose.mmol(nights.hypoMgdl))", value: below)
+        }
+        if let drift = night.drift {
+            Row(title: "Дрейф 03→06", value: String(format: "%+.1f", drift / Glucose.mgdlPerMmol))
+        }
+        if nights.counted > 0 {
+            Row(title: "За неделю", value: String(format: "%.0f из %.0f ночей ниже", nights.hypoNights, nights.counted))
+        }
+    }
+
+    /// «39 мин · 2 раза» или «не было».
+    private var below: String {
+        guard let minutes = night.lowMinutes, minutes > 0 else { return "не было" }
+        return "\(Int(minutes)) мин · \(Glucose.times(Int(night.lowCount ?? 1)))"
+    }
+
+    /// «12.10» из «2026-10-12».
+    private var day: String {
+        let parts = night.date.split(separator: "-")
+        return parts.count == 3 ? "\(parts[2]).\(parts[1])" : night.date
     }
 }
 
