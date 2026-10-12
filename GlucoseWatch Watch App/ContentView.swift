@@ -206,14 +206,15 @@ private struct DayPage: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+                if let nights = now.nights, let night = nights.nights.last {
+                    NightSummary(nights: nights, night: night, date: date)
+                    Divider()
+                }
                 if let sensor {
                     Row(title: "Сенсор", value: sensor > 0 ? Glucose.ago(date.addingTimeInterval(-sensor), at: date) : "истёк")
                         .foregroundStyle(sensor < 24 * 3600 ? .orange : .primary)
                 }
 
-                if let nights = now.nights, let night = nights.nights.last {
-                    NightSummary(nights: nights, night: night)
-                }
 
                 ReloadSummary(date: date)
             }
@@ -230,6 +231,10 @@ private struct DayPage: View {
 private struct NightSummary: View {
     let nights: Now.Nights
     let night: Now.Nights.Night
+    let date: Date
+
+    /// Порог покрытия, с которого сервер засчитывает ночь (NIGHT_MIN_COVERAGE).
+    private static let minCoverage = 50.0
 
     var body: some View {
         Divider()
@@ -237,13 +242,12 @@ private struct NightSummary: View {
             Text("Ночь")
                 .font(.footnote.weight(.semibold))
             Spacer()
-            Text(night.partial ? "идёт" : day)
+            Text(status)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
         if let min = night.min {
-            Row(title: "Минимум", value: Glucose.mmol(min))
-                .foregroundStyle(night.hypo == true ? .red : .primary)
+            Row(title: "Минимум", value: Glucose.mmol(min), valueColor: night.hypo == true ? .red : .primary)
         }
         if night.count > 0 {
             Row(title: "Ниже \(Glucose.mmol(nights.hypoMgdl))", value: below)
@@ -252,13 +256,25 @@ private struct NightSummary: View {
             Row(title: "Дрейф 03→06", value: String(format: "%+.1f", drift / Glucose.mgdlPerMmol))
         }
         if nights.counted > 0 {
-            Row(title: "За неделю", value: String(format: "%.0f из %.0f ночей ниже", nights.hypoNights, nights.counted))
+            Row(title: "Ночей с гипо", value: String(format: "%.0f из %.0f", nights.hypoNights, nights.counted))
         }
     }
 
-    /// «39 мин · 2 раза» или «не было».
+    /// «идёт», пока конец ночи впереди; «12.10 · неполная», если ночь
+    /// обрезана (окном, пропуском или сменой пояса); иначе просто дата.
+    /// Флаг неполноты сам по себе не значит «идёт»: в старом снимке он
+    /// остаётся и у закончившейся ночи.
+    private var status: String {
+        if night.end > date.timeIntervalSince1970 { return "идёт" }
+        return night.partial ? "\(day) · неполная" : day
+    }
+
+    /// «39 мин · 2 раза»; «не было» — только если ночь накрыта замерами,
+    /// иначе отсутствие провала ничего не доказывает.
     private var below: String {
-        guard let minutes = night.lowMinutes, minutes > 0 else { return "не было" }
+        guard let minutes = night.lowMinutes, minutes > 0 else {
+            return night.coverage >= Self.minCoverage ? "не было" : "мало данных"
+        }
         return "\(Int(minutes)) мин · \(Glucose.times(Int(night.lowCount ?? 1)))"
     }
 
@@ -319,6 +335,7 @@ private struct ReloadSummary: View {
 private struct Row: View {
     let title: String
     let value: String
+    var valueColor: Color = .primary
 
     var body: some View {
         HStack {
@@ -326,6 +343,7 @@ private struct Row: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
+                .foregroundStyle(valueColor)
         }
         .font(.footnote)
     }

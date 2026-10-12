@@ -55,7 +55,10 @@ struct Now: Codable {
     struct Nights: Codable {
         struct Night: Codable {
             let date: String
+            let end: Double
             let count: Double
+            /// Доля ночи, накрытая замерами, в процентах.
+            let coverage: Double
             let partial: Bool
             let min: Double?
             let hypo: Bool?
