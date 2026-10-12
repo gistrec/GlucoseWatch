@@ -221,6 +221,19 @@ private struct DayPage: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+                // Эпизоды с полуночи — сколько раз и сколько минут сахар был за
+                // пределами диапазона. Старый сервер их не присылал — тогда строк нет.
+                let midnight = now.localMidnight(of: Date(timeIntervalSince1970: now.generatedAt))
+                if let lows = now.lows {
+                    let minutes = todayMinutes(lows, since: midnight)
+                    Row(title: "Ниже \(Glucose.mmol(now.target.low))", value: episodes(minutes, covered: today != nil),
+                        valueColor: minutes.isEmpty ? nil : .red)
+                }
+                if let highs = now.highs {
+                    let minutes = todayMinutes(highs, since: midnight)
+                    Row(title: "Выше \(Glucose.mmol(now.target.high))", value: episodes(minutes, covered: today != nil),
+                        valueColor: minutes.isEmpty ? nil : .orange)
+                }
                 if let nights = now.nights, let night = nights.nights.last {
                     NightSummary(nights: nights, night: night, date: date)
                     Divider()
@@ -298,6 +311,28 @@ private struct LastMeal: View {
 
     /// Окно разбора сервера (analysis.WINDOW).
     private static let window: TimeInterval = 4 * 3600
+}
+
+/// Сегодняшние минуты каждого эпизода. Начатый до полуночи считается
+/// только своей сегодняшней частью — вчерашние минуты на странице «сегодня»
+/// были бы чужими; кончившийся ровно в полночь выпадает. Полночь — суток
+/// снимка, не текущих: старый снимок после полуночи иначе обнулил бы минуты.
+private func todayMinutes(_ list: [Now.Episode], since midnight: Date) -> [Double] {
+    let start = midnight.timeIntervalSince1970
+    return list
+        .map { $0.start >= start ? $0.minutes : max(0, $0.end - start) / 60 }
+        .filter { $0 > 0 }
+}
+
+/// «7 раз · 105 мин». Без эпизодов — «пока не было»: сутки ещё идут; а
+/// если с полуночи данных меньше получаса (``covered`` ложно) — «мало
+/// данных», отсутствие эпизодов тогда ничего не говорит.
+private func episodes(_ minutes: [Double], covered: Bool) -> String {
+    guard !minutes.isEmpty else { return covered ? "пока не было" : "мало данных" }
+    // Хвост через секунды после полуночи — доля минуты; «0 мин» рядом с
+    // «1 раз» читалось бы как ошибка, поэтому не меньше минуты.
+    let total = max(1, Int(minutes.reduce(0, +).rounded()))
+    return "\(Glucose.times(minutes.count)) · \(total) мин"
 }
 
 /// Последняя ночь, 00:00–06:00 по местным часам, и итог недели — то, что
