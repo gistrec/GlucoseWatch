@@ -9,30 +9,17 @@ struct ContentView: View {
 
     var body: some View {
         TimelineView(.everyMinute) { context in
-            if let now, let latest = now.latest {
-                // Страницы вместо длинной прокрутки: колёсико листает экран
-                // целиком, как в системных приложениях. Сверху то, ради чего
-                // поднимают руку, ниже — подробности.
-                TabView(selection: $page) {
-                    NowPage(now: now, latest: latest, date: context.date, failed: failed)
-                        .tag(0)
-                    ForecastPage(now: now, date: context.date)
-                        .tag(1)
-                    DayPage(now: now, date: context.date)
-                        .tag(2)
-                }
-                .tabViewStyle(.verticalPage)
+            #if DEBUG
+            // `-complications` показывает мини-графики complication вместо
+            // приложения — чтобы снять их скриншот из терминала.
+            if UserDefaults.standard.bool(forKey: "complications"), let now {
+                ComplicationShowcase(now: now, date: context.date)
             } else {
-                VStack(spacing: 8) {
-                    if failed {
-                        Text("Нет связи с glucose.gistrec.cloud")
-                            .multilineTextAlignment(.center)
-                    } else {
-                        ProgressView()
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                screen(date: context.date)
             }
+            #else
+            screen(date: context.date)
+            #endif
         }
         // Пока экран активен — запрос раз в минуту: поднял руку при открытом
         // приложении и видишь цифру не старше минуты-двух. Смена фазы
@@ -46,6 +33,34 @@ struct ContentView: View {
                 opened = false
                 try? await Task.sleep(for: .seconds(60))
             }
+        }
+    }
+
+    @ViewBuilder
+    private func screen(date: Date) -> some View {
+        if let now, let latest = now.latest {
+            // Страницы вместо длинной прокрутки: колёсико листает экран
+            // целиком, как в системных приложениях. Сверху то, ради чего
+            // поднимают руку, ниже — подробности.
+            TabView(selection: $page) {
+                NowPage(now: now, latest: latest, date: date, failed: failed)
+                    .tag(0)
+                ForecastPage(now: now, date: date)
+                    .tag(1)
+                DayPage(now: now, date: date)
+                    .tag(2)
+            }
+            .tabViewStyle(.verticalPage)
+        } else {
+            VStack(spacing: 8) {
+                if failed {
+                    Text("Нет связи с glucose.gistrec.cloud")
+                        .multilineTextAlignment(.center)
+                } else {
+                    ProgressView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -215,6 +230,7 @@ private struct ReloadSummary: View {
     private static let names = [
         "GlucoseComplication": "Глюкоза",
         "ChartComplication": "График",
+        "ChartUsualComplication": "График+",
         "InsulinComplication": "Инсулин",
         "CarbsComplication": "Углеводы",
     ]
@@ -266,6 +282,27 @@ private struct Row: View {
         .font(.footnote)
     }
 }
+
+#if DEBUG
+/// Мини-графики обеих complication «График» в рамке размером со слот
+/// Modular Duo на 45 мм — для скриншотов из терминала.
+private struct ComplicationShowcase: View {
+    let now: Now
+    let date: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("График").font(.caption2).foregroundStyle(.secondary)
+            Sparkline(now: now, date: date)
+                .frame(width: 172, height: 64)
+            Text("График и обычный день").font(.caption2).foregroundStyle(.secondary)
+            Sparkline(now: now, date: date, usual: true)
+                .frame(width: 172, height: 64)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+#endif
 
 #Preview {
     ContentView()

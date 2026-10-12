@@ -252,8 +252,26 @@ struct ChartComplication: Widget {
     }
 }
 
+/// Та же кривая, а под ней «обычный день» за две недели: видно, обычный ли
+/// сейчас подъём для этого времени суток. Отдельной complication, чтобы
+/// выбирать в редакторе циферблата, а не настройкой в приложении.
+struct ChartUsualComplication: Widget {
+    let kind = "ChartUsualComplication"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider(kind: kind)) { entry in
+            ChartComplicationView(entry: entry, usual: true)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+        .configurationDisplayName("График и обычный день")
+        .description("Кривая за шесть часов, а под ней коридор и медиана за две недели.")
+        .supportedFamilies([.accessoryRectangular])
+    }
+}
+
 struct ChartComplicationView: View {
     let entry: Entry
+    var usual = false
 
     var body: some View {
         if let now = entry.now, let latest = now.latest {
@@ -262,7 +280,7 @@ struct ChartComplicationView: View {
             // Цифра живёт в верхнем слоте, здесь весь слот под кривую. Остаётся
             // только давность, когда данные устарели: иначе старый график не
             // отличить от свежего.
-            Sparkline(now: now, date: entry.date)
+            Sparkline(now: now, date: entry.date, usual: usual)
                 .overlay(alignment: .topTrailing) {
                     Age(since: Date(timeIntervalSince1970: latest.t), stale: stale, date: entry.date)
                         .padding(.horizontal, 3)

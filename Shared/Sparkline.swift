@@ -8,18 +8,22 @@ struct Sparkline: View {
     let now: Now
     let date: Date
     var hours = 6.0
+    /// Рисовать ли под кривой «обычный день» — коридор и медиану за две
+    /// недели. Для этого отдельная complication, а не настройка.
+    var usual = false
 
     var body: some View {
         let start = date.addingTimeInterval(-hours * 3600)
         let points = curve(from: start)
         let pieces = Dictionary(grouping: points, by: \.2).sorted { $0.key < $1.key }.map(\.value)
         let tail = now.isStale(at: date) ? [] : forecast
-        let values = points.map(\.1) + tail.map(\.1)
+        let end = tail.last?.0 ?? date
+        let band = usual ? now.usualDay(from: start, to: end) : []
+        let values = points.map(\.1) + tail.map(\.1) + band.flatMap { [$0.low, $0.high] }
         let low = now.target.low / Glucose.mgdlPerMmol
         let high = now.target.high / Glucose.mgdlPerMmol
         let bottom = min(low - 0.5, values.min() ?? low)
         let top = max(high + 0.5, values.max() ?? high)
-        let end = tail.last?.0 ?? date
         let stale = now.isStale(at: date)
 
         Chart {
@@ -38,6 +42,16 @@ struct Sparkline: View {
                             .font(.system(size: 8, weight: .bold, design: .rounded))
                             .foregroundStyle(.gray)
                     }
+            }
+
+            ForEach(band) { slot in
+                AreaMark(x: .value("t", slot.date), yStart: .value("mmol", slot.low), yEnd: .value("mmol", slot.high), series: .value("s", "usual\(slot.run)"))
+                    .interpolationMethod(.monotone)
+                    .foregroundStyle(.gray.opacity(0.25))
+                LineMark(x: .value("t", slot.date), y: .value("mmol", slot.median), series: .value("s", "median\(slot.run)"))
+                    .interpolationMethod(.monotone)
+                    .lineStyle(StrokeStyle(lineWidth: 0.8, dash: [2, 2]))
+                    .foregroundStyle(.gray.opacity(0.75))
             }
 
             ForEach(Array(pieces.enumerated()), id: \.offset) { index, piece in
