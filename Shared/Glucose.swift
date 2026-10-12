@@ -86,6 +86,14 @@ struct Now: Codable {
         }
     }
 
+    /// Эпизод ниже или выше диапазона с местной полуночи: начало и конец в
+    /// unix-секундах и длительность в минутах.
+    struct Episode: Codable {
+        let start: Double
+        let end: Double
+        let minutes: Double
+    }
+
     /// Разбор приёмов пищи сервером: окно 4 часа от еды. Мг/дл и минуты.
     struct Analysis: Codable {
         struct Targets: Codable {
@@ -176,6 +184,8 @@ struct Now: Codable {
     let profile: Profile?
     let nights: Nights?
     let analysis: Analysis?
+    let lows: [Episode]?
+    let highs: [Episode]?
 }
 
 enum Feed {

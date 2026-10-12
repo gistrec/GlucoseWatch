@@ -221,6 +221,16 @@ private struct DayPage: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+                // Эпизоды с полуночи — сколько раз и сколько минут сахар был за
+                // пределами диапазона. Старый сервер их не присылал — тогда строк нет.
+                if let lows = now.lows {
+                    Row(title: "Ниже \(Glucose.mmol(now.target.low))", value: episodes(lows, covered: today != nil),
+                        valueColor: lows.isEmpty ? nil : .red)
+                }
+                if let highs = now.highs {
+                    Row(title: "Выше \(Glucose.mmol(now.target.high))", value: episodes(highs, covered: today != nil),
+                        valueColor: highs.isEmpty ? nil : .orange)
+                }
                 if let nights = now.nights, let night = nights.nights.last {
                     NightSummary(nights: nights, night: night, date: date)
                     Divider()
@@ -298,6 +308,15 @@ private struct LastMeal: View {
 
     /// Окно разбора сервера (analysis.WINDOW).
     private static let window: TimeInterval = 4 * 3600
+}
+
+/// «7 раз · 105 мин». Без эпизодов — «пока не было»: сутки ещё идут; а
+/// если с полуночи данных меньше получаса (``covered`` ложно) — «мало
+/// данных», отсутствие эпизодов тогда ничего не говорит.
+private func episodes(_ list: [Now.Episode], covered: Bool) -> String {
+    guard !list.isEmpty else { return covered ? "пока не было" : "мало данных" }
+    let minutes = list.reduce(0) { $0 + $1.minutes }
+    return "\(Glucose.times(list.count)) · \(Int(minutes)) мин"
 }
 
 /// Последняя ночь, 00:00–06:00 по местным часам, и итог недели — то, что
