@@ -246,17 +246,23 @@ struct GlucoseChart: View {
         let points = (now.series?.twoDays?.points ?? [])
             .filter { $0.count == 2 }
             .compactMap { raw -> Point? in
-                guard let shifted = calendar.date(byAdding: .day, value: 1, to: Date(timeIntervalSince1970: raw[0])),
-                      shifted >= start, shifted <= end else { return nil }
+                let source = Date(timeIntervalSince1970: raw[0])
+                guard let shifted = calendar.date(byAdding: .day, value: 1, to: source),
+                      shifted >= start, shifted <= end,
+                      // Весной вчерашних 02:xx сегодня нет, и календарь
+                      // переносит их на 03:xx, где лежат настоящие вчерашние
+                      // 03:xx. Точка, у которой сдвиг поменял время на
+                      // циферблате, — из несуществующего часа: её не рисуем.
+                      calendar.dateComponents([.hour, .minute], from: source)
+                        == calendar.dateComponents([.hour, .minute], from: shifted)
+                else { return nil }
                 return Point(shifted.timeIntervalSince1970, raw[1])
             }
 
         var pieces: [[Point]] = []
         for point in points {
-            // Весной вчерашних 02:xx сегодня нет, и календарь переносит их на
-            // 03:xx, где уже лежат настоящие вчерашние 03:xx. Такие точки
-            // идут назад или повторяют время — у Charts это дубли
-            // идентификаторов, поэтому берём только строго вперёд.
+            // Страховка: точки, которые не идут строго вперёд, дали бы Charts
+            // повторяющиеся идентификаторы.
             if let last = pieces.last?.last, point.date <= last.date {
                 continue
             }
