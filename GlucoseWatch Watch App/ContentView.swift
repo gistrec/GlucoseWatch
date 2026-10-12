@@ -223,13 +223,16 @@ private struct DayPage: View {
                 }
                 // Эпизоды с полуночи — сколько раз и сколько минут сахар был за
                 // пределами диапазона. Старый сервер их не присылал — тогда строк нет.
+                let midnight = now.localMidnight(of: Date(timeIntervalSince1970: now.generatedAt))
                 if let lows = now.lows {
-                    Row(title: "Ниже \(Glucose.mmol(now.target.low))", value: episodes(lows, covered: today != nil, since: now.localMidnight(of: date)),
-                        valueColor: lows.isEmpty ? nil : .red)
+                    let minutes = todayMinutes(lows, since: midnight)
+                    Row(title: "Ниже \(Glucose.mmol(now.target.low))", value: episodes(minutes, covered: today != nil),
+                        valueColor: minutes.isEmpty ? nil : .red)
                 }
                 if let highs = now.highs {
-                    Row(title: "Выше \(Glucose.mmol(now.target.high))", value: episodes(highs, covered: today != nil, since: now.localMidnight(of: date)),
-                        valueColor: highs.isEmpty ? nil : .orange)
+                    let minutes = todayMinutes(highs, since: midnight)
+                    Row(title: "Выше \(Glucose.mmol(now.target.high))", value: episodes(minutes, covered: today != nil),
+                        valueColor: minutes.isEmpty ? nil : .orange)
                 }
                 if let nights = now.nights, let night = nights.nights.last {
                     NightSummary(nights: nights, night: night, date: date)
@@ -310,18 +313,23 @@ private struct LastMeal: View {
     private static let window: TimeInterval = 4 * 3600
 }
 
+/// Сегодняшние минуты каждого эпизода. Начатый до полуночи считается
+/// только своей сегодняшней частью — вчерашние минуты на странице «сегодня»
+/// были бы чужими; кончившийся ровно в полночь выпадает. Полночь — суток
+/// снимка, не текущих: старый снимок после полуночи иначе обнулил бы минуты.
+private func todayMinutes(_ list: [Now.Episode], since midnight: Date) -> [Double] {
+    let start = midnight.timeIntervalSince1970
+    return list
+        .map { $0.start >= start ? $0.minutes : max(0, $0.end - start) / 60 }
+        .filter { $0 > 0 }
+}
+
 /// «7 раз · 105 мин». Без эпизодов — «пока не было»: сутки ещё идут; а
 /// если с полуночи данных меньше получаса (``covered`` ложно) — «мало
 /// данных», отсутствие эпизодов тогда ничего не говорит.
-/// Эпизод, начатый до полуночи, считается только своей сегодняшней частью:
-/// вчерашние минуты на странице «сегодня» были бы чужими.
-private func episodes(_ list: [Now.Episode], covered: Bool, since midnight: Date) -> String {
-    guard !list.isEmpty else { return covered ? "пока не было" : "мало данных" }
-    let start = midnight.timeIntervalSince1970
-    let minutes = list.reduce(0.0) { total, item in
-        total + (item.start >= start ? item.minutes : max(0, item.end - start) / 60)
-    }
-    return "\(Glucose.times(list.count)) · \(Int(minutes)) мин"
+private func episodes(_ minutes: [Double], covered: Bool) -> String {
+    guard !minutes.isEmpty else { return covered ? "пока не было" : "мало данных" }
+    return "\(Glucose.times(minutes.count)) · \(Int(minutes.reduce(0, +))) мин"
 }
 
 /// Последняя ночь, 00:00–06:00 по местным часам, и итог недели — то, что
