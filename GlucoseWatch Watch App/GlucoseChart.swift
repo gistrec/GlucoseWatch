@@ -253,6 +253,13 @@ struct GlucoseChart: View {
 
         var pieces: [[Point]] = []
         for point in points {
+            // Весной вчерашних 02:xx сегодня нет, и календарь переносит их на
+            // 03:xx, где уже лежат настоящие вчерашние 03:xx. Такие точки
+            // идут назад или повторяют время — у Charts это дубли
+            // идентификаторов, поэтому берём только строго вперёд.
+            if let last = pieces.last?.last, point.date <= last.date {
+                continue
+            }
             if let last = pieces.last?.last, point.date.timeIntervalSince(last.date) <= 25 * 60 {
                 pieces[pieces.count - 1].append(point)
             } else {
