@@ -281,13 +281,20 @@ private struct LastMeal: View {
         return String(format: "+%.1f за %.0f мин", meal.rise / Glucose.mgdlPerMmol, meal.peakMin)
     }
 
-    /// Где сахар к концу окна относительно исходного; пока окно открыто или
-    /// его прервала следующая еда, итога нет.
+    /// Где сахар к концу окна относительно исходного. «Разбор идёт» — только
+    /// пока 4 часа не прошли; закончившееся окно без итога называется по
+    /// причине, а не висит «идущим» бесконечно.
     private var outcome: String {
         if meal.cut { return "прервано едой" }
-        guard meal.complete, let ret = meal.ret else { return "разбор идёт" }
-        return String(format: "%+.1f", ret / Glucose.mgdlPerMmol)
+        if date.timeIntervalSince1970 < meal.t + Self.window { return "разбор идёт" }
+        if let ret = meal.ret { return String(format: "%+.1f", ret / Glucose.mgdlPerMmol) }
+        // Сенсор молчал в окне — или нет замера в его конце, или окно обрезала
+        // следующая еда при подъёме в пределах ориентира.
+        return meal.complete ? "нет итога" : "мало данных"
     }
+
+    /// Окно разбора сервера (analysis.WINDOW).
+    private static let window: TimeInterval = 4 * 3600
 }
 
 /// Последняя ночь, 00:00–06:00 по местным часам, и итог недели — то, что
