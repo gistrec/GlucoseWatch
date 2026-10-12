@@ -65,10 +65,10 @@ struct GlucoseChart: View {
                 // сахар бывает в это время в половине дней, и тонкая медиана.
                 // Видно, обычный ли сейчас подъём или сегодняшняя случайность.
                 ForEach(usual) { slot in
-                    AreaMark(x: .value("t", slot.date), yStart: .value("mmol", slot.low), yEnd: .value("mmol", slot.high), series: .value("s", "usual"))
+                    AreaMark(x: .value("t", slot.date), yStart: .value("mmol", slot.low), yEnd: .value("mmol", slot.high), series: .value("s", "usual\(slot.run)"))
                         .interpolationMethod(.monotone)
                         .foregroundStyle(.gray.opacity(0.22))
-                    LineMark(x: .value("t", slot.date), y: .value("mmol", slot.median), series: .value("s", "median"))
+                    LineMark(x: .value("t", slot.date), y: .value("mmol", slot.median), series: .value("s", "median\(slot.run)"))
                         .interpolationMethod(.monotone)
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 2]))
                         .foregroundStyle(.gray.opacity(0.7))
@@ -243,42 +243,56 @@ struct GlucoseChart: View {
         let low: Double
         let median: Double
         let high: Double
+        /// Номер непрерывного куска: через пустой слот Charts тянули бы
+        /// коридор, которого нет, поэтому каждый кусок — своя серия.
+        let run: Int
         var id: Date { date }
     }
 
     /// Профиль «обычного дня», разложенный на окно графика: каждый слот
-    /// времени суток ставится на сегодняшнюю (или вчерашнюю — окно может
-    /// заходить в прошлые сутки) дату по поясу профиля, в середину слота.
-    /// Слоты без данных пропускаются.
+    /// времени суток ставится на дату окна (оно может заходить во вчера) по
+    /// поясу профиля, в середину слота. Время берётся по циферблату, а не
+    /// минутами от полуночи: в день перевода часов отсчёт минутами сдвигал
+    /// бы слоты на час. Слот, которого в этот день нет, и пустой слот
+    /// пропускаются и рвут полосу.
     private func usualDay(from start: Date, to end: Date) -> [UsualSlot] {
         guard let profile = now.profile, profile.slotMin > 0, !profile.slots.isEmpty,
               let zone = TimeZone(identifier: profile.tz) else { return [] }
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = zone
-        let step = TimeInterval(profile.slotMin * 60)
+        let half = TimeInterval(profile.slotMin * 30)
 
         var result: [UsualSlot] = []
+        var run = 0
         var day = calendar.startOfDay(for: start)
         while day <= end {
             for (index, slot) in profile.slots.enumerated() {
+                let minutes = index * profile.slotMin
                 guard let slot, slot.count >= 3,
-                      let slotStart = calendar.date(byAdding: .minute, value: index * profile.slotMin, to: day) else { continue }
-                let middle = slotStart.addingTimeInterval(step / 2)
+                      let slotStart = calendar.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: day),
+                      calendar.component(.hour, from: slotStart) == minutes / 60,
+                      calendar.component(.minute, from: slotStart) == minutes % 60
+                else {
+                    run += 1
+                    continue
+                }
+                let middle = slotStart.addingTimeInterval(half)
                 guard middle >= start, middle <= end else { continue }
+                // Страховка от повтора времени на осеннем переводе: Charts
+                // нужны уникальные и возрастающие x.
+                if let last = result.last, middle <= last.date { continue }
                 result.append(UsualSlot(
                     date: middle,
                     low: slot[0] / Glucose.mgdlPerMmol,
                     median: slot[1] / Glucose.mgdlPerMmol,
-                    high: slot[2] / Glucose.mgdlPerMmol
+                    high: slot[2] / Glucose.mgdlPerMmol,
+                    run: run
                 ))
             }
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
             day = next
         }
-        // Страховка от дублей времени на переводе часов: Charts нужны
-        // уникальные и возрастающие x.
-        var seen = Set<Date>()
-        return result.sorted { $0.date < $1.date }.filter { seen.insert($0.date).inserted }
+        return result
     }
 
     /// От последнего замера через точки модели — та же ломаная, что на
