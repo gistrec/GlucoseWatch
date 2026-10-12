@@ -260,7 +260,9 @@ private struct LastMeal: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
-        Row(title: "Подъём", value: rise, valueColor: meal.rise > targets.rise ? .orange : nil)
+        // Из гипо подъём выше ориентира — лечение, а не перебор: не красим.
+        Row(title: meal.fromHypo == true ? "Подъём из гипо" : "Подъём", value: rise,
+            valueColor: meal.fromHypo != true && meal.rise > targets.rise ? .orange : nil)
         Row(title: "Через 4 ч", value: outcome)
         if meal.hypo {
             Text("Ниже диапазона после пика")

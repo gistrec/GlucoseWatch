@@ -108,6 +108,9 @@ struct Now: Codable {
             let ret: Double?
             /// Провал ниже порога после пика.
             let hypo: Bool
+            /// В еду вошли из гипо: подъём от низкой опоры — это выход из
+            /// неё, а не перебор. Старый сервер флаг не присылал.
+            let fromHypo: Bool?
             /// Окно прервала следующая еда.
             let cut: Bool
             let complete: Bool
