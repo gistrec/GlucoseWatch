@@ -79,7 +79,8 @@
 
 ## Иконка
 
-`tools/make-icon.swift` рисует иконку по значку страницы (`web/favicon.svg`) в квадрате 1024:
+`tools/make-icon.swift` перерисовывает в квадрате 1024 значок страницы GlucoseStat
+(`web/favicon.svg` в репозитории GlucoseStat, сам файл скрипт не читает):
 
 ```sh
 xcrun swift tools/make-icon.swift "GlucoseWatch Watch App/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
